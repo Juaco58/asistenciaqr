@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Pro</title>
+    <title>Asistencia QR Infalible</title>
     <!-- Librería para escanear QR -->
     <script src="https://unpkg.com"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        button { background: #28a745; color: white; border: none; padding: 14px 20px; border-radius: 5px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
-        #reader { width: 100%; margin-top: 15px; border-radius: 8px; overflow: hidden; background: #000; min-height: 250px; }
+        .btn-live { background: #007bff; color: white; border: none; padding: 14px 20px; border-radius: 5px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
+        .btn-photo { background: #28a745; color: white; border: none; padding: 14px 20px; border-radius: 5px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 15px; font-weight: bold; }
+        #reader { width: 100%; margin-top: 15px; border-radius: 8px; overflow: hidden; background: #222; min-height: 50px; }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; }
         .online { background: #d4edda; color: #155724; }
         .offline { background: #f8d7da; color: #721c24; }
+        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
+        .file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -28,17 +31,24 @@
         <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
     </div>
 
-    <button onclick="iniciarEscaneo()">Encender Cámara y Escanear</button>
-    
-    <!-- Aquí se renderizará el visor de la cámara -->
+    <!-- Opción 1: Captura de Foto Nativa (MÉTODO SEGURO) -->
+    <div class="file-input-wrapper">
+        <button class="btn-photo">📷 Sacar Foto al QR del Papel</button>
+        <input type="file" accept="image/*" capture="environment" id="qr-file-input">
+    </div>
+
+    <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ccc;">
+
+    <!-- Opción 2: Escáner en vivo (Si el navegador lo permite) -->
+    <button class="btn-live" onclick="iniciarEscaneoEnVivo()">🎥 Probar Cámara en Vivo</button>
     <div id="reader"></div>
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px;"></div>
 </div>
 
 <script>
+    // --- CONTROL DE RED ---
     const statusDiv = document.getElementById('connection-status');
-    
     function actualizarEstadoRed() {
         if (navigator.onLine) {
             statusDiv.textContent = "Conectado a Internet";
@@ -53,49 +63,49 @@
     window.addEventListener('offline', actualizarEstadoRed);
     actualizarEstadoRed();
 
-    // --- NUEVA LÓGICA DE ESCANEO CORREGIDA ---
-    let html5Qrcode;
+    // --- MÉTODO 1: PROCESAR QR DESDE FOTO (INCORRUPTIBLE) ---
+    const fileInput = document.getElementById('qr-file-input');
+    const html5QrCodeParser = new Html5Qrcode("reader");
 
-    function iniciarEscaneo() {
-        document.getElementById('resultado').innerText = "Solicitando permisos de cámara...";
+    fileInput.addEventListener('change', e => {
+        if (e.target.files.length == 0) return;
         
-        // Si ya había una instancia corriendo, la cerramos antes de empezar
-        if (html5Qrcode) {
-            html5Qrcode.stop().catch(() => {});
-        }
+        document.getElementById('resultado').innerText = "Procesando imagen...";
+        const imageFile = e.target.files[0];
+        
+        // La librería lee el archivo de imagen directamente sin encender transmisiones de video
+        html5QrCodeParser.scanFile(imageFile, true)
+            .then(decodedText => {
+                const usuarioId = document.getElementById('user-id').value;
+                procesarAsistencia(usuarioId, decodedText);
+            })
+            .catch(err => {
+                document.getElementById('resultado').innerHTML = `<span style="color:red;">No se detectó un QR claro en la foto. Volvé a intentar enfocando bien el papel.</span>`;
+                console.error(err);
+            });
+    });
 
-        // Creamos la instancia apuntando al contenedor div 'reader'
-        // useBarCodeDetectorIfSupported: false soluciona el cuelgue en Chrome/Android
-        html5Qrcode = new Html5Qrcode("reader", { useBarCodeDetectorIfSupported: false });
-
-        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
-
-        // Forzamos el uso de la cámara trasera ('environment')
-        html5Qrcode.start(
+    // --- MÉTODO 2: ESCÁNER EN VIVO (OPCIONAL) ---
+    let html5QrcodeLive;
+    function iniciarEscaneoEnVivo() {
+        document.getElementById('resultado').innerText = "Iniciando stream de video...";
+        if (html5QrcodeLive) { html5QrcodeLive.stop().catch(()=>{}); }
+        
+        html5QrcodeLive = new Html5Qrcode("reader", { useBarCodeDetectorIfSupported: false });
+        html5QrcodeLive.start(
             { facingMode: "environment" }, 
-            config, 
-            onScanSuccess, 
-            onScanError
-        ).then(() => {
-            document.getElementById('resultado').innerText = "Cámara activa. Apuntá al QR impreso.";
-        }).catch(err => {
-            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de cámara: ${err}</span>`;
-            console.error("Error al iniciar cámara:", err);
+            { fps: 10, qrbox: 250 },
+            (text) => {
+                html5QrcodeLive.stop();
+                procesarAsistencia(document.getElementById('user-id').value, text);
+            },
+            () => {}
+        ).catch(err => {
+            document.getElementById('resultado').innerHTML = `<span style="color:red;">Tu navegador bloqueó la cámara en vivo. Usá el botón verde de arriba.</span>`;
         });
     }
 
-    function onScanSuccess(decodedText, decodedResult) {
-        // Al detectar el QR con éxito, apagamos la cámara
-        html5Qrcode.stop().then(() => {
-            const usuarioId = document.getElementById('user-id').value;
-            procesarAsistencia(usuarioId, decodedText);
-        }).catch(err => console.error(err));
-    }
-
-    function onScanError(errorMessage) {
-        // Ignorar errores repetitivos de búsqueda de código en el feed en vivo
-    }
-
+    // --- PROCESAMIENTO GENERAL ---
     function procesarAsistencia(usuario, reunion) {
         const registro = {
             usuario_id: usuario,
@@ -113,7 +123,7 @@
     function enviarAlServidor(datos) {
         document.getElementById('resultado').innerHTML = `
             <div style="background:#d4edda; color:green; padding:10px; border-radius:5px;">
-                ¡Presente Validado en Tiempo Real!<br>
+                ¡Presente Validado!<br>
                 <b>Reunión:</b> ${datos.reunion_id}
             </div>
         `;
@@ -126,7 +136,7 @@
 
         document.getElementById('resultado').innerHTML = `
             <div style="background:#fff3cd; color:orange; padding:10px; border-radius:5px;">
-                Guardado Localmente (Offline)<br>
+                Guardado en Memoria (Offline)<br>
                 Se subirá cuando recuperes internet.
             </div>
         `;
@@ -137,7 +147,7 @@
         if (pendientes.length > 0) {
             pendientes.forEach(reg => enviarAlServidor(reg));
             localStorage.removeItem('asistencias_pendientes');
-            alert("¡Se sincronizaron los presentes guardados offline!");
+            alert("¡Se sincronizaron los presentes guardados offline con éxito!");
         }
     }
 </script>
