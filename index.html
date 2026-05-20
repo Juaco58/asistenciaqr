@@ -3,132 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Veloz</title>
-    <!-- Motor QR Ultra-liviano -->
-    <script src="https://jsdelivr.net"></script>
+    <title>Asistencia QR Nativa</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; }
-        .online { background: #d4edda; color: #155724; }
-        .offline { background: #f8d7da; color: #721c24; }
+        .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Control de Asistencia</h2>
+    <h2>Control de Asistencia Nativo</h2>
     
-    <div id="connection-status" class="status online">Conectado a Internet</div>
+    <div class="status">Sistema Listo</div>
 
     <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
         <label><b>Tu ID de Usuario asignado:</b></label>
         <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
     </div>
 
-    <div style="text-align: left; margin-bottom: 10px;"><label><b>Paso 1: Sacá o seleccioná la foto</b></label></div>
+    <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
     
-    <!-- Input nativo puro sin envoltorios estéticos que puedan romper la carga del archivo -->
+    <!-- Input nativo puro para activar la cámara del celular -->
     <input type="file" accept="image/*" id="qr-file-input" class="input-file">
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
 
 <script>
-    // --- ESTADO DE INTERNET ---
-    const statusDiv = document.getElementById('connection-status');
-    function actualizarRed() {
-        if (navigator.onLine) {
-            statusDiv.textContent = "Conectado a Internet";
-            statusDiv.className = "status online";
-        } else {
-            statusDiv.textContent = "Modo Offline (Sin Internet)";
-            statusDiv.className = "status offline";
-        }
+    // Comprobamos si el navegador soporta el motor nativo de QR
+    if (!('BarcodeDetector' in window)) {
+        alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
-    window.addEventListener('online', actualizarRed);
-    window.addEventListener('offline', actualizarRed);
-    actualizarRed();
 
-    // --- PROCESADOR SEGURO DE QR ---
-    document.getElementById('qr-file-input').addEventListener('change', function(e) {
+    document.getElementById('qr-file-input').addEventListener('change', async function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Optimizando y leyendo imagen...</span>";
+        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
 
-        const archivo = archivos[0];
-        const lector = new FileReader();
+        const archivoImagen = archivos[0];
 
-        lector.onload = function(evento) {
-            const img = new Image();
-            img.onload = function() {
-                // CREAMOS UN LIENZO PEQUEÑO PARA EVITAR QUE EL CELULAR SE QUEDE SIN MEMORIA
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Forzamos un tamaño máximo de 400px (ideal para leer QR sin pesar nada)
-                const MAX_DIMENSION = 400;
-                let ancho = img.width;
-                let alto = img.height;
+        try {
+            // Creamos un objeto de imagen nativo de alta velocidad (ImageBitmap)
+            // Esto evita los bloqueos de seguridad de disco local (CORS)
+            const bitmap = await createImageBitmap(archivoImagen);
 
-                if (ancho > alto) {
-                    if (ancho > MAX_DIMENSION) {
-                        alto *= MAX_DIMENSION / ancho;
-                        ancho = MAX_DIMENSION;
-                    }
-                } else {
-                    if (alto > MAX_DIMENSION) {
-                        ancho *= MAX_DIMENSION / alto;
-                        alto = MAX_DIMENSION;
-                    }
-                }
+            // Inicializamos el detector nativo del sistema operativo (Android/iOS/Windows)
+            const detector = new BarcodeDetector({ formats: ['qr_code'] });
+            
+            // Analizamos los píxeles directamente del objeto bitmap
+            const simbolosDetectados = await detector.detect(bitmap);
 
-                canvas.width = ancho;
-                canvas.height = alto;
-                
-                // Dibujamos la imagen comprimida en el lienzo virtual
-                ctx.drawImage(img, 0, 0, ancho, alto);
+            if (simbolosDetectados.length > 0) {
+                const textoQR = simbolosDetectados[0].rawValue;
+                const usuarioId = document.getElementById('user-id').value;
 
-                try {
-                    // Extraemos los píxeles livianos
-                    const datosImagen = ctx.getImageData(0, 0, ancho, alto);
-                    
-                    // Escaneamos con jsQR
-                    const codigoQR = jsQR(datosImagen.data, datosImagen.width, datosImagen.height, {
-                        inversionAttempts: "dontInvert"
-                    });
-
-                    if (codigoQR && codigoQR.data) {
-                        const usuarioId = document.getElementById('user-id').value;
-                        document.getElementById('resultado').innerHTML = `
-                            <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                                <b>¡Presente Validado!</b><br>
-                                Usuario: ${usuarioId}<br>
-                                Reunión detectada: ${codigoQR.data}
-                            </div>
-                        `;
-                    } else {
-                        document.getElementById('resultado').innerHTML = `
-                            <span style="color:red;">❌ No se detectó el QR.</span><br>
-                            <small style="color:#666;">Asegurate de que el QR se vea completo y derecho en la foto.</small>
-                        `;
-                    }
-                } catch (err) {
-                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>Error al procesar los píxeles de la foto.</span>";
-                    console.error(err);
-                }
-            };
-            img.src = evento.target.result;
-        };
-        lector.readAsDataURL(archivo);
+                document.getElementById('resultado').innerHTML = `
+                    <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
+                        <b>¡Presente Validado!</b><br>
+                        Usuario: ${usuarioId}<br>
+                        Reunión: ${textoQR}
+                    </div>
+                `;
+            } else {
+                document.getElementById('resultado').innerHTML = `
+                    <span style="color:red;">❌ No se encontró ningún QR en la foto.</span><br>
+                    <small style="color:#666;">Intentá enfocar el código más de cerca y sin reflejos de luz.</small>
+                `;
+            }
+        } catch (err) {
+            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de compatibilidad al abrir el archivo.</span>`;
+            console.error(err);
+        }
     });
 </script>
 
 </body>
 </html>
-
 
 
 
