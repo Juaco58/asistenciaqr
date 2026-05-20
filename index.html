@@ -37,7 +37,8 @@
     // (Reemplazá estos datos con los tuyos de la pestaña Settings -> API de Supabase)
     // ==========================================
     const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co/rest/v1/";
-    const SUPABASE_ANON_KEY = "TejasDelSur&2026const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U"
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 document.getElementById('qr-file-input').addEventListener('change', async function(e) {
     const archivos = e.target.files;
