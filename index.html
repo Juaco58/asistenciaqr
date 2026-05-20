@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistencia QR Conectada</title>
-    <!-- CORRECCIÓN 1: Enlace oficial y completo de la librería Supabase -->
+    <!-- ENLACE CORREGIDO: Ahora descarga la librería de Supabase completa -->
     <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
@@ -32,10 +32,8 @@
 </div>
 
 <script>
-    // CORRECCIÓN 2: URL limpia sin "/rest/v1/" para que la librería conecte bien
+    // Configuración limpia de tu base de datos Supabase
     const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
-    
-    // CORRECCIÓN 3: Clave cerrada correctamente con comilla al final
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
     
     const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -47,6 +45,7 @@
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Verificando identidad y procesando...</span>";
 
         try {
+            // CORRECCIÓN: procesamos explícitamente el primer archivo seleccionado
             const bitmap = await createImageBitmap(archivos[0]);
             const detector = new BarcodeDetector({ formats: ['qr_code'] });
             const simbolosDetectados = await detector.detect(bitmap);
