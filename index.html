@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR</title>
+    <title>Asistencia QR Pro</title>
     <!-- Librería para escanear QR -->
     <script src="https://unpkg.com"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        button { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 5px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px; }
-        #reader { width: 100%; margin-top: 15px; border-radius: 8px; overflow: hidden; }
+        button { background: #28a745; color: white; border: none; padding: 14px 20px; border-radius: 5px; font-size: 16px; cursor: pointer; width: 100%; margin-top: 10px; font-weight: bold; }
+        #reader { width: 100%; margin-top: 15px; border-radius: 8px; overflow: hidden; background: #000; min-height: 250px; }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; }
         .online { background: #d4edda; color: #155724; }
         .offline { background: #f8d7da; color: #721c24; }
@@ -21,10 +21,8 @@
 <div class="container">
     <h2>Control de Asistencia</h2>
     
-    <!-- Indicador de conexión -->
     <div id="connection-status" class="status online">Conectado a Internet</div>
 
-    <!-- Simulación de Login (ID del dueño del celular) -->
     <div style="margin-top: 15px; text-align: left;">
         <label><b>Tu ID de Usuario asignado:</b></label>
         <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
@@ -32,14 +30,13 @@
 
     <button onclick="iniciarEscaneo()">Encender Cámara y Escanear</button>
     
-    <!-- Contenedor donde se mostrará la cámara -->
+    <!-- Aquí se renderizará el visor de la cámara -->
     <div id="reader"></div>
     
-    <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333;"></div>
+    <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px;"></div>
 </div>
 
 <script>
-    // --- CONFIGURACIÓN DE CONEXIÓN ---
     const statusDiv = document.getElementById('connection-status');
     
     function actualizarEstadoRed() {
@@ -56,29 +53,49 @@
     window.addEventListener('offline', actualizarEstadoRed);
     actualizarEstadoRed();
 
-    // --- LÓGICA DEL ESCÁNER QR ---
-    let html5QrcodeScanner;
+    // --- NUEVA LÓGICA DE ESCANEO CORREGIDA ---
+    let html5Qrcode;
 
     function iniciarEscaneo() {
-        document.getElementById('resultado').innerText = "Buscando código QR...";
+        document.getElementById('resultado').innerText = "Solicitando permisos de cámara...";
         
-        html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
-        html5QrcodeScanner.render(onScanSuccess, onScanError);
+        // Si ya había una instancia corriendo, la cerramos antes de empezar
+        if (html5Qrcode) {
+            html5Qrcode.stop().catch(() => {});
+        }
+
+        // Creamos la instancia apuntando al contenedor div 'reader'
+        // useBarCodeDetectorIfSupported: false soluciona el cuelgue en Chrome/Android
+        html5Qrcode = new Html5Qrcode("reader", { useBarCodeDetectorIfSupported: false });
+
+        const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+        // Forzamos el uso de la cámara trasera ('environment')
+        html5Qrcode.start(
+            { facingMode: "environment" }, 
+            config, 
+            onScanSuccess, 
+            onScanError
+        ).then(() => {
+            document.getElementById('resultado').innerText = "Cámara activa. Apuntá al QR impreso.";
+        }).catch(err => {
+            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de cámara: ${err}</span>`;
+            console.error("Error al iniciar cámara:", err);
+        });
     }
 
     function onScanSuccess(decodedText, decodedResult) {
-        // En este ejemplo, decodedText será el ID de la reunión impreso en el papel (ej: "REUNION_05")
-        html5QrcodeScanner.clear(); // Apaga la cámara al tener éxito
-        
-        const usuarioId = document.getElementById('user-id').value;
-        procesarAsistencia(usuarioId, decodedText);
+        // Al detectar el QR con éxito, apagamos la cámara
+        html5Qrcode.stop().then(() => {
+            const usuarioId = document.getElementById('user-id').value;
+            procesarAsistencia(usuarioId, decodedText);
+        }).catch(err => console.error(err));
     }
 
     function onScanError(errorMessage) {
-        // Error silencioso mientras busca el QR en la cámara
+        // Ignorar errores repetitivos de búsqueda de código en el feed en vivo
     }
 
-    // --- PROCESAMIENTO Y MODO OFFLINE ---
     function procesarAsistencia(usuario, reunion) {
         const registro = {
             usuario_id: usuario,
@@ -94,35 +111,33 @@
     }
 
     function enviarAlServidor(datos) {
-        // Aquí conectarás con la URL de tu Supabase más adelante
         document.getElementById('resultado').innerHTML = `
-            <span style="color:green;">¡Presente Validado en Tiempo Real!</span><br>
-            Reunión: ${datos.reunion_id}
+            <div style="background:#d4edda; color:green; padding:10px; border-radius:5px;">
+                ¡Presente Validado en Tiempo Real!<br>
+                <b>Reunión:</b> ${datos.reunion_id}
+            </div>
         `;
-        console.log("Enviado a la nube:", datos);
     }
 
     function guardarEnLocal(datos) {
-        // Obtenemos los pendientes actuales del almacenamiento del celular
         let pendientes = JSON.parse(localStorage.getItem('asistencias_pendientes')) || [];
         pendientes.push(datos);
         localStorage.setItem('asistencias_pendientes', JSON.stringify(pendientes));
 
         document.getElementById('resultado').innerHTML = `
-            <span style="color:orange;">Guardado en el Celular (Offline)</span><br>
-            Se sincronizará apenas recuperes internet.
+            <div style="background:#fff3cd; color:orange; padding:10px; border-radius:5px;">
+                Guardado Localmente (Offline)<br>
+                Se subirá cuando recuperes internet.
+            </div>
         `;
     }
 
     function sincronizarPendientes() {
         let pendientes = JSON.parse(localStorage.getItem('asistencias_pendientes')) || [];
         if (pendientes.length > 0) {
-            console.log("Sincronizando registros offline...", pendientes);
-            // Recorremos y enviamos cada uno a la nube
             pendientes.forEach(reg => enviarAlServidor(reg));
-            // Limpiamos la memoria local tras subirlos
             localStorage.removeItem('asistencias_pendientes');
-            alert("¡Se sincronizaron los presentes guardados offline con éxito!");
+            alert("¡Se sincronizaron los presentes guardados offline!");
         }
     }
 </script>
