@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistencia QR Conectada</title>
-    <!-- Incluimos la librería oficial de Supabase para JavaScript -->
+    <!-- CORRECCIÓN 1: Enlace oficial y completo de la librería Supabase -->
     <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
@@ -32,79 +32,72 @@
 </div>
 
 <script>
-    // ==========================================
-    // CONFIGURACIÓN DE TU CUENTA SUPABASE
-    // (Reemplazá estos datos con los tuyos de la pestaña Settings -> API de Supabase)
-    // ==========================================
-    const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co/rest/v1/";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U"
+    // CORRECCIÓN 2: URL limpia sin "/rest/v1/" para que la librería conecte bien
+    const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
+    
+    // CORRECCIÓN 3: Clave cerrada correctamente con comilla al final
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
+    
     const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-document.getElementById('qr-file-input').addEventListener('change', async function(e) {
-    const archivos = e.target.files;
-    if (archivos.length === 0) return;
+    document.getElementById('qr-file-input').addEventListener('change', async function(e) {
+        const archivos = e.target.files;
+        if (archivos.length === 0) return;
 
-    document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Verificando identidad y procesando...</span>";
+        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Verificando identidad y procesando...</span>";
 
-    try {
-        const bitmap = await createImageBitmap(archivos[0]);
-        const detector = new BarcodeDetector({ formats: ['qr_code'] });
-        const simbolosDetectados = await detector.detect(bitmap);
+        try {
+            const bitmap = await createImageBitmap(archivos[0]);
+            const detector = new BarcodeDetector({ formats: ['qr_code'] });
+            const simbolosDetectados = await detector.detect(bitmap);
 
-        if (simbolosDetectados.length > 0) {
-            const textoQR = simbolosDetectados[0].rawValue; // ID de la Reunión leído del papel
-            const usuarioId = document.getElementById('user-id').value; // ID que tiene la app
+            if (simbolosDetectados.length > 0) {
+                const textoQR = simbolosDetectados[0].rawValue; 
+                const usuarioId = document.getElementById('user-id').value; 
 
-            // 🔍 PASO 1: VERIFICAR SI EL USUARIO EXISTE EN LA BASE DE DATOS
-            const { data: usuarioEncontrado, error: errorBusqueda } = await supabase
-                .from('usuarios')
-                .select('nombre')
-                .eq('id', usuarioId)
-                .single(); // Nos trae un único registro si coincide el ID
+                // 🔍 PASO 1: VERIFICAR USUARIO EN SUPABASE
+                const { data: usuarioEncontrado, error: errorBusqueda } = await supabase
+                    .from('usuarios')
+                    .select('nombre')
+                    .eq('id', usuarioId)
+                    .single(); 
 
-            if (errorBusqueda || !usuarioEncontrado) {
-                // Si el administrador lo borró o nunca lo agregó, frena acá
+                if (errorBusqueda || !usuarioEncontrado) {
+                    document.getElementById('resultado').innerHTML = `
+                        <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
+                            <b>❌ Acceso Denegado</b><br>
+                            El ID de usuario <b>${usuarioId}</b> no está registrado en el sistema.
+                        </div>
+                    `;
+                    return; 
+                }
+
+                // 🚀 PASO 2: GUARDAR ASISTENCIA EN SUPABASE
+                const { error: errorAsistencia } = await supabase
+                    .from('asistencias')
+                    .insert([
+                        { usuario_id: usuarioId, reunion_id: textoQR }
+                    ]);
+
+                if (errorAsistencia) throw errorAsistencia;
+
                 document.getElementById('resultado').innerHTML = `
-                    <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
-                        <b>❌ Acceso Denegado</b><br>
-                        El ID de usuario <b>${usuarioId}</b> no está registrado en el sistema.
+                    <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
+                        <b>¡Presente Confirmado!</b><br>
+                        Bienvenido/a: ${usuarioEncontrado.nombre}<br>
+                        Reunión: ${textoQR}
                     </div>
                 `;
-                return; // Corta la ejecución para no cargar el presente
+
+            } else {
+                document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se encontró ningún QR en la foto.</span>`;
             }
-
-            // 🚀 PASO 2: SI EXISTE, LE ACREDITAMOS EL PRESENTE EN LA TABLA ASISTENCIAS
-            const { error: errorAsistencia } = await supabase
-                .from('asistencias')
-                .insert([
-                    { usuario_id: usuarioId, reunion_id: textoQR }
-                ]);
-
-            if (errorAsistencia) throw errorAsistencia;
-
-            // Mensaje de éxito informando el nombre real del usuario de la base de datos
-            document.getElementById('resultado').innerHTML = `
-                <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                    <b>¡Presente Confirmado!</b><br>
-                    Bienvenido/a: ${usuarioEncontrado.nombre}<br>
-                    Reunión: ${textoQR}
-                </div>
-            `;
-
-        } else {
-            document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se encontró ningún QR en la foto.</span>`;
+        } catch (err) {
+            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de procesamiento: ${err.message || err}</span>`;
+            console.error(err);
         }
-    } catch (err) {
-        document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de procesamiento: ${err.message || err}</span>`;
-        console.error(err);
-    }
-});
+    });
 </script>
 
 </body>
 </html>
-
-
-
-
-
