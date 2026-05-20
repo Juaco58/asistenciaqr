@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Veloz</title>
+    <title>Asistencia QR Directo</title>
     <!-- Librería para escanear QR -->
     <script src="https://unpkg.com"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-photo { background: #28a745; color: white; border: none; padding: 16px 20px; border-radius: 5px; font-size: 18px; cursor: pointer; width: 100%; font-weight: bold; }
+        .btn-photo { background: #007bff; color: white; border: none; padding: 16px 20px; border-radius: 5px; font-size: 18px; cursor: pointer; width: 100%; font-weight: bold; }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; }
         .online { background: #d4edda; color: #155724; }
         .offline { background: #f8d7da; color: #721c24; }
         .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
         .file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
-        #canvas-oculto { display: none; }
     </style>
 </head>
 <body>
@@ -30,7 +29,7 @@
         <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
     </div>
 
-    <!-- Único Botón de Foto (Simplificado) -->
+    <!-- Botón directo de captura -->
     <div class="file-input-wrapper">
         <button class="btn-photo">📷 SACAR FOTO AL QR</button>
         <input type="file" accept="image/*" capture="environment" id="qr-file-input">
@@ -39,19 +38,16 @@
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
 
-<!-- Elemento oculto para redimensionar la imagen pesada del celular -->
-<canvas id="canvas-oculto"></canvas>
-<!-- Contenedor requerido por la librería -->
+<!-- Contenedor obligatorio oculto para la librería -->
 <div id="reader" style="display:none;"></div>
 
 <script>
-    // --- CONTROL DE CONEXIÓN ---
+    // --- CONTROL DE RED ---
     const statusDiv = document.getElementById('connection-status');
     function actualizarEstadoRed() {
         if (navigator.onLine) {
             statusDiv.textContent = "Conectado a Internet";
             statusDiv.className = "status online";
-            sincronizarPendientes();
         } else {
             statusDiv.textContent = "Modo Offline (Sin Internet)";
             statusDiv.className = "status offline";
@@ -61,108 +57,52 @@
     window.addEventListener('offline', actualizarEstadoRed);
     actualizarEstadoRed();
 
-    // --- PROCESAMIENTO INTELIGENTE DE FOTO ---
+    // --- LECTURA DIRECTA DE LA FOTO ---
     const fileInput = document.getElementById('qr-file-input');
-    const html5QrCodeParser = new Html5Qrcode("reader");
+    
+    // Inicializamos el motor de la librería apuntando al div invisible
+    const html5QrCode = new Html5Qrcode("reader");
 
-    fileInput.addEventListener('change', e => {
-        if (e.target.files.length == 0) return;
+    fileInput.addEventListener('change', function(e) {
+        if (e.target.files.length === 0) return;
         
-        document.getElementById('resultado').innerHTML = "<span style='color:#666;'>Procesando y optimizando imagen...</span>";
+        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>Leyendo el archivo de foto...</span>";
         
-        const archivoOriginal = e.target.files[0];
-        const reader = new FileReader();
+        const archivoFoto = e.target.files[0];
         
-        reader.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                // Redimensionamos la foto a un tamaño óptimo (máximo 800px) para que la librería no se tilde
-                const canvas = document.getElementById('canvas-oculto');
-                const ctx = canvas.getContext('2d');
+        // Alerta de diagnóstico para saber si el celular responde al elegir la foto
+        alert("Foto recibida con éxito en la App. Buscando código QR...");
+
+        // Enviamos la foto cruda directo a la librería sin procesamientos intermedios
+        html5QrCode.scanFile(archivoFoto, true)
+            .then(textoDecodificado => {
+                // Si encuentra el QR, ejecuta esto
+                alert("¡QR Detectado con éxito!");
                 
-                let width = img.width;
-                let height = img.height;
-                const MAX_WIDTH = 800;
+                const usuarioId = document.getElementById('user-id').value;
                 
-                if (width > MAX_WIDTH) {
-                    height *= MAX_WIDTH / width;
-                    width = MAX_WIDTH;
-                }
+                document.getElementById('resultado').innerHTML = `
+                    <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
+                        <b>¡Presente Validado!</b><br>
+                        Usuario: ${usuarioId}<br>
+                        Reunión: ${textoDecodificado}
+                    </div>
+                `;
+            })
+            .catch(error => {
+                // Si NO encuentra un QR en la foto, o si falla la librería
+                alert("Error en el escaneo: No se vio un código QR claro en la foto.");
                 
-                canvas.width = width;
-                canvas.height = height;
-                ctx.drawImage(img, 0, 0, width, height);
-                
-                // Convertimos el canvas optimizado a un archivo Blob ejecutable
-                canvas.toBlob(blob => {
-                    const archivoOptimizado = new File([blob], "qr_foto.jpg", { type: "image/jpeg" });
-                    
-                    // Escaneamos el archivo optimizado
-                    html5QrCodeParser.scanFile(archivoOptimizado, true)
-                        .then(decodedText => {
-                            const usuarioId = document.getElementById('user-id').value;
-                            procesarAsistencia(usuarioId, decodedText);
-                        })
-                        .catch(err => {
-                            document.getElementById('resultado').innerHTML = `
-                                <span style="color:red;">❌ No se detectó el QR en la foto.</span><br>
-                                <small style="color:#666;">Intentá sacar la foto más de cerca, derecha y bien enfocada.</small>
-                            `;
-                        });
-                }, 'image/jpeg', 0.8);
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(archivoOriginal);
+                document.getElementById('resultado').innerHTML = `
+                    <span style="color:red;">❌ Error al leer la foto.</span><br>
+                    <small style="color:#666;">Asegurate de que el QR salga centrado, nítido y bien iluminado.</small>
+                `;
+                console.error(error);
+            });
     });
-
-    // --- LOGICA DE REGISTRO ---
-    function procesarAsistencia(usuario, reunion) {
-        const registro = {
-            usuario_id: usuario,
-            reunion_id: reunion,
-            fecha_escaneo: new Date().toISOString()
-        };
-
-        if (navigator.onLine) {
-            enviarAlServidor(registro);
-        } else {
-            guardarEnLocal(registro);
-        }
-    }
-
-    function enviarAlServidor(datos) {
-        document.getElementById('resultado').innerHTML = `
-            <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                <b>¡Presente Validado!</b><br>
-                Reunión: ${datos.reunion_id}
-            </div>
-        `;
-    }
-
-    function guardarEnLocal(datos) {
-        let pendientes = JSON.parse(localStorage.getItem('asistencias_pendientes')) || [];
-        pendientes.push(datos);
-        localStorage.setItem('asistencias_pendientes', JSON.stringify(pendientes));
-
-        document.getElementById('resultado').innerHTML = `
-            <div style="background:#fff3cd; color:#856404; padding:15px; border-radius:5px; border: 1px solid #ffeeba;">
-                <b>Guardado Local (Offline)</b><br>
-                Se subirá cuando vuelvas a tener señal.
-            </div>
-        `;
-    }
-
-    function sincronizarPendientes() {
-        let pendientes = JSON.parse(localStorage.getItem('asistencias_pendientes')) || [];
-        if (pendientes.length > 0) {
-            pendientes.forEach(reg => enviarAlServidor(reg));
-            localStorage.removeItem('asistencias_pendientes');
-            alert("¡Se sincronizaron los presentes guardados offline con éxito!");
-        }
-    }
 </script>
 
 </body>
 </html>
+
 
