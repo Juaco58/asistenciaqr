@@ -3,17 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Compatible</title>
-    <!-- Librería Ultra-compatible jsQR -->
+    <title>Asistencia QR Veloz</title>
+    <!-- Motor QR Ultra-liviano -->
     <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .btn-photo { background: #e0a800; color: #333; border: none; padding: 16px 20px; border-radius: 5px; font-size: 18px; cursor: pointer; width: 100%; font-weight: bold; margin-bottom: 15px; }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; }
         .online { background: #d4edda; color: #155724; }
         .offline { background: #f8d7da; color: #721c24; }
-        input[type=file] { width: 100%; padding: 10px; background: #eee; border-radius: 5px; box-sizing: border-box; }
+        .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -28,17 +27,18 @@
         <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
     </div>
 
-    <!-- Botón directo simplificado estándar de HTML -->
-    <div style="text-align: left; margin-bottom: 10px;"><label><b>Seleccionar o sacar foto:</b></label></div>
-    <input type="file" accept="image/*" id="qr-file-input">
+    <div style="text-align: left; margin-bottom: 10px;"><label><b>Paso 1: Sacá o seleccioná la foto</b></label></div>
+    
+    <!-- Input nativo puro sin envoltorios estéticos que puedan romper la carga del archivo -->
+    <input type="file" accept="image/*" id="qr-file-input" class="input-file">
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
 
 <script>
-    // --- CONTROL DE RED ---
+    // --- ESTADO DE INTERNET ---
     const statusDiv = document.getElementById('connection-status');
-    function actualizarEstadoRed() {
+    function actualizarRed() {
         if (navigator.onLine) {
             statusDiv.textContent = "Conectado a Internet";
             statusDiv.className = "status online";
@@ -47,61 +47,88 @@
             statusDiv.className = "status offline";
         }
     }
-    window.addEventListener('online', actualizarEstadoRed);
-    window.addEventListener('offline', actualizarEstadoRed);
-    actualizarEstadoRed();
+    window.addEventListener('online', actualizarRed);
+    window.addEventListener('offline', actualizarRed);
+    actualizarRed();
 
-    // --- PROCESAMIENTO COMPATIBLE ---
-    const fileInput = document.getElementById('qr-file-input');
+    // --- PROCESADOR SEGURO DE QR ---
+    document.getElementById('qr-file-input').addEventListener('change', function(e) {
+        const archivos = e.target.files;
+        if (archivos.length === 0) return;
 
-    fileInput.addEventListener('change', function(e) {
-        if (e.target.files.length === 0) return;
-        
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>Procesando imagen nativa...</span>";
-        
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        
-        reader.onload = function(event) {
+        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Optimizando y leyendo imagen...</span>";
+
+        const archivo = archivos[0];
+        const lector = new FileReader();
+
+        lector.onload = function(evento) {
             const img = new Image();
             img.onload = function() {
-                // Creamos un lienzo en memoria para extraer los píxeles puros de la foto
+                // CREAMOS UN LIENZO PEQUEÑO PARA EVITAR QUE EL CELULAR SE QUEDE SIN MEMORIA
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
                 
-                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                
-                // Ejecutamos el escaneo directo de matriz de píxeles
-                const code = jsQR(imageData.data, imageData.width, imageData.height, {
-                    inversionAttempts: "dontInvert",
-                });
-                
-                if (code) {
-                    const usuarioId = document.getElementById('user-id').value;
-                    document.getElementById('resultado').innerHTML = `
-                        <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                            <b>¡Presente Validado!</b><br>
-                            Usuario: ${usuarioId}<br>
-                            Reunión: ${code.data}
-                        </div>
-                    `;
+                // Forzamos un tamaño máximo de 400px (ideal para leer QR sin pesar nada)
+                const MAX_DIMENSION = 400;
+                let ancho = img.width;
+                let alto = img.height;
+
+                if (ancho > alto) {
+                    if (ancho > MAX_DIMENSION) {
+                        alto *= MAX_DIMENSION / ancho;
+                        ancho = MAX_DIMENSION;
+                    }
                 } else {
-                    document.getElementById('resultado').innerHTML = `
-                        <span style="color:red;">❌ No se detectó un QR legible.</span><br>
-                        <small style="color:#666;">Intentá sacarle una foto más de cerca o mejor iluminada al papel.</small>
-                    `;
+                    if (alto > MAX_DIMENSION) {
+                        ancho *= MAX_DIMENSION / alto;
+                        alto = MAX_DIMENSION;
+                    }
+                }
+
+                canvas.width = ancho;
+                canvas.height = alto;
+                
+                // Dibujamos la imagen comprimida en el lienzo virtual
+                ctx.drawImage(img, 0, 0, ancho, alto);
+
+                try {
+                    // Extraemos los píxeles livianos
+                    const datosImagen = ctx.getImageData(0, 0, ancho, alto);
+                    
+                    // Escaneamos con jsQR
+                    const codigoQR = jsQR(datosImagen.data, datosImagen.width, datosImagen.height, {
+                        inversionAttempts: "dontInvert"
+                    });
+
+                    if (codigoQR && codigoQR.data) {
+                        const usuarioId = document.getElementById('user-id').value;
+                        document.getElementById('resultado').innerHTML = `
+                            <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
+                                <b>¡Presente Validado!</b><br>
+                                Usuario: ${usuarioId}<br>
+                                Reunión detectada: ${codigoQR.data}
+                            </div>
+                        `;
+                    } else {
+                        document.getElementById('resultado').innerHTML = `
+                            <span style="color:red;">❌ No se detectó el QR.</span><br>
+                            <small style="color:#666;">Asegurate de que el QR se vea completo y derecho en la foto.</small>
+                        `;
+                    }
+                } catch (err) {
+                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>Error al procesar los píxeles de la foto.</span>";
+                    console.error(err);
                 }
             };
-            img.src = event.target.result;
+            img.src = evento.target.result;
         };
-        reader.readAsDataURL(file);
+        lector.readAsDataURL(archivo);
     });
 </script>
 
 </body>
 </html>
+
+
 
 
