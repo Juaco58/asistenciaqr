@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Nativa</title>
+    <title>Asistencia QR Conectada</title>
+    <!-- Incluimos la librería oficial de Supabase para JavaScript -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -14,9 +16,9 @@
 <body>
 
 <div class="container">
-    <h2>Control de Asistencia Nativo</h2>
+    <h2>Control de Asistencia Real</h2>
     
-    <div class="status">Sistema Listo</div>
+    <div class="status">Conectado a la Nube</div>
 
     <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
         <label><b>Tu ID de Usuario asignado:</b></label>
@@ -24,57 +26,62 @@
     </div>
 
     <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
-    
-    <!-- Input nativo puro para activar la cámara del celular -->
     <input type="file" accept="image/*" id="qr-file-input" class="input-file">
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
 
 <script>
-    // Comprobamos si el navegador soporta el motor nativo de QR
-    if (!('BarcodeDetector' in window)) {
-        alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
-    }
+    // ==========================================
+    // CONFIGURACIÓN DE TU CUENTA SUPABASE
+    // (Reemplazá estos datos con los tuyos de la pestaña Settings -> API de Supabase)
+    // ==========================================
+    const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co/rest/v1/";
+    const SUPABASE_ANON_KEY = "TejasDelSur&2026";
+    
+    // Inicializamos la conexión con la nube
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     document.getElementById('qr-file-input').addEventListener('change', async function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
+        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Procesando y subiendo a la base de datos...</span>";
 
-        const archivoImagen = archivos[0];
+        const archivoImagen = archivos;
 
         try {
-            // Creamos un objeto de imagen nativo de alta velocidad (ImageBitmap)
-            // Esto evita los bloqueos de seguridad de disco local (CORS)
             const bitmap = await createImageBitmap(archivoImagen);
-
-            // Inicializamos el detector nativo del sistema operativo (Android/iOS/Windows)
             const detector = new BarcodeDetector({ formats: ['qr_code'] });
-            
-            // Analizamos los píxeles directamente del objeto bitmap
             const simbolosDetectados = await detector.detect(bitmap);
 
             if (simbolosDetectados.length > 0) {
-                const textoQR = simbolosDetectados[0].rawValue;
+                const textoQR = simbolosDetectados.rawValue;
                 const usuarioId = document.getElementById('user-id').value;
+
+                // 🚀 ENVIAR LOS DATOS A SUPABASE EN TIEMPO REAL
+                const { data, error } = await supabase
+                    .from('asistencias')
+                    .insert([
+                        { usuario_id: usuarioId, reunion_id: textoQR }
+                    ]);
+
+                if (error) {
+                    throw error;
+                }
 
                 document.getElementById('resultado').innerHTML = `
                     <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                        <b>¡Presente Validado!</b><br>
+                        <b>¡Presente Guardado en la Nube!</b><br>
                         Usuario: ${usuarioId}<br>
                         Reunión: ${textoQR}
                     </div>
                 `;
             } else {
-                document.getElementById('resultado').innerHTML = `
-                    <span style="color:red;">❌ No se encontró ningún QR en la foto.</span><br>
-                    <small style="color:#666;">Intentá enfocar el código más de cerca y sin reflejos de luz.</small>
-                `;
+                document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se encontró ningún QR en la foto.</span>`;
             }
         } catch (err) {
-            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de compatibilidad al abrir el archivo.</span>`;
+            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de conexión: ${err.message || err}</span>`;
             console.error(err);
         }
     });
@@ -82,6 +89,8 @@
 
 </body>
 </html>
+
+
 
 
 
