@@ -15,7 +15,6 @@
 
 <div class="container">
     <h2>Control de Asistencia Nativo</h2>
-    
     <div class="status">Sistema Listo</div>
 
     <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
@@ -24,7 +23,6 @@
     </div>
 
     <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
-    
     <input type="file" accept="image/*" id="qr-file-input" class="input-file">
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
@@ -41,10 +39,8 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
 
-        const archivoImagen = archivos[0];
-
         try {
-            const bitmap = await createImageBitmap(archivoImagen);
+            const bitmap = await createImageBitmap(archivos[0]);
             const detector = new BarcodeDetector({ formats: ['qr_code'] });
             const simbolosDetectados = await detector.detect(bitmap);
 
@@ -61,12 +57,17 @@
                     'Content-Type': 'application/json'
                 };
 
-                // 🔍 PASO 1: VALIDAR SI EL USUARIO EXISTE EN TU TABLA 'usuarios'
+                // 🔍 PASO 1: LEER DE LA TABLA 'usuarios'
                 const urlUsuarios = "https://supabase.co." + encodeURIComponent(usuarioId) + "&select=nombre";
                 const respuestaUsuario = await fetch(urlUsuarios, { method: 'GET', headers: cabeceras });
+                
+                if (!respuestaUsuario.ok) {
+                    const txtErr = await respuestaUsuario.text();
+                    throw new Error("Error en tabla usuarios: " + txtErr);
+                }
+
                 const datosUsuario = await respuestaUsuario.json();
 
-                // Si Supabase devuelve una lista vacía, significa que el ID no está registrado
                 if (!datosUsuario || datosUsuario.length === 0) {
                     document.getElementById('resultado').innerHTML = `
                         <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
@@ -77,11 +78,10 @@
                     return; 
                 }
 
-                // Extraemos el nombre real del usuario encontrado
-                const nombreReal = datosUsuario[0].nombre;
+                const nombreReal = datosUsuario[0].nombre; // CORRECCIÓN: Acceso correcto al primer elemento de la lista
                 document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Registrando asistencia...</span>";
 
-                // 🚀 PASO 2: GUARDAR EL PRESENTE EN TU TABLA 'asistencias'
+                // 🚀 PASO 2: ESCRIBIR EN LA TABLA 'asistencias'
                 const urlAsistencias = "https://supabase.co";
                 const respuestaAsistencia = await fetch(urlAsistencias, {
                     method: 'POST',
@@ -93,7 +93,8 @@
                 });
 
                 if (!respuestaAsistencia.ok) {
-                    throw new Error("No se pudo asentar el presente en la base de datos.");
+                    const txtErr = await respuestaAsistencia.text();
+                    throw new Error("Error en tabla asistencias: " + txtErr);
                 }
 
                 document.getElementById('resultado').innerHTML = `
@@ -104,13 +105,11 @@
                     </div>
                 `;
             } else {
-                document.getElementById('resultado').innerHTML = `
-                    <span style="color:red;">❌ No se encontró ningún QR en la foto.</span><br>
-                    <small style="color:#666;">Intentá enfocar el código más de cerca y sin reflejos de luz.</small>
-                `;
+                document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se encontró ningún QR en la foto.</span>`;
             }
         } catch (err) {
-            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de comunicación: ${err.message || err}</span>`;
+            // Muestra en la pantalla el mensaje real que devuelve el servidor
+            document.getElementById('resultado').innerHTML = `<span style="color:red; text-align:left; display:block;">⚠️ ${err.message}</span>`;
             console.error(err);
         }
     });
