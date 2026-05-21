@@ -38,7 +38,6 @@
 <img id="img-temporal">
 
 <script>
-    // Verificar soporte del navegador de forma segura
     const tieneLectorNativo = ('BarcodeDetector' in window);
 
     const inputUsuario = document.getElementById('user-id');
@@ -90,16 +89,15 @@
             return;
         }
 
-        // Si estás probando en una PC que no lo soporta, frena acá limpiamente sin romperse
         if (!tieneLectorNativo) {
-            document.getElementById('resultado').innerHTML = `<span style="color:orange;">⚠️ Tu computadora no soporta el escaneo nativo. Probá este mismo archivo desde el navegador de tu celular, donde sí va a funcionar.</span>`;
+            document.getElementById('resultado').innerHTML = `<span style="color:orange;">⚠️ Tu dispositivo no soporta el escaneo nativo.</span>`;
             inputArchivo.value = "";
             return;
         }
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; // Extracción individual nativa recuperada
+        const fotoSeleccionada = archivos; // 🌟 Extracción individual nativa reparada
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -111,7 +109,7 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados[0].rawValue;
+                        const textoQR = simbolosDetectados.rawValue;
 
                         const SUPABASE_URL = "https://supabase.co";
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
@@ -142,7 +140,7 @@
                             return; 
                         }
 
-                        const nombreReal = datosUsuario[0].nombre; 
+                        const nombreReal = datosUsuario.nombre; 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
                         // 🚀 PROCESO 2: POST ASISTENCIAS
@@ -158,14 +156,11 @@
 
                         if (!respuestaAsistencia.ok) throw new Error("Error al insertar asistencia.");
 
-                        // Guardar en memoria local
                         localStorage.setItem('asistencia_user_id', usuarioId);
 
-                        // Hora local sin letras amontonadas
                         const ahora = new Date();
                         const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                        // Bloqueos de éxito
                         inputArchivo.disabled = true;
                         inputUsuario.disabled = true;
                         inputArchivo.style.background = "#6c757d";
