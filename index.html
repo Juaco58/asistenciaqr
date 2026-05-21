@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Escudo de seguridad para habilitar conexiones externas -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://supabase.co; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://supabase.co;">
     <title>Asistencia QR Profesional</title>
     <style>
@@ -98,7 +99,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; // 🌟 REPARADO: Volvemos a extraer el archivo individual correctamente
+        const fotoSeleccionada = archivos; // 🌟 REPARADO: Volvemos a extraer el archivo individual correctamente
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -110,7 +111,7 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados[0].rawValue;
+                        const textoQR = simbolosDetectados.rawValue;
 
                         const SUPABASE_URL = "https://supabase.co";
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
@@ -141,7 +142,7 @@
                             return; 
                         }
 
-                        const nombreReal = datosUsuario[0].nombre; 
+                        const nombreReal = datosUsuario.nombre; 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
                         // 🚀 PROCESO 2: POST ASISTENCIAS
