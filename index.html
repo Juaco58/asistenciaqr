@@ -9,7 +9,7 @@
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
-        .btn-google { display: none; background: #28a745; color: white; border: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 20px; cursor: pointer; width: 100%; box-sizing: border-box; }
+        .btn-google { display: none; background: #28a745; color: white; text-decoration: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 20px; display: inline-block; box-sizing: border-box; width: 100%; }
         #img-temporal { display: none; }
     </style>
 </head>
@@ -22,7 +22,8 @@
 
     <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
         <label><b>Tu ID de Usuario asignado:</b></label>
-        <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
+        <!-- Al cambiar este campo, el enlace se actualiza automáticamente abajo -->
+        <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;" oninput="actualizarEnlaceBase()">
     </div>
 
     <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
@@ -30,15 +31,30 @@
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 
-    <!-- Modificado a un Botón de acción real controlado por JavaScript -->
-    <button id="boton-confirmar" class="btn-google" onclick="redirigirAGoogle()">2. CONFIRMAR PRESENTE 🚀</button>
+    <!-- Enlace nativo puro que el navegador no puede bloquear al hacer clic -->
+    <a id="boton-confirmar" class="btn-google">2. CONFIRMAR PRESENTE 🚀</a>
 </div>
 
 <img id="img-temporal">
 
 <script>
-    // Variable global para guardar la ruta una vez detectada
-    let urlGlobalPrellenada = "";
+    const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
+    const CAMPO_USUARIO = "2133752850";         
+    const CAMPO_REUNION = "1601257763";         
+
+    // Función para armar el enlace apenas abre la página o cambia el usuario
+    function actualizarEnlaceBase(textoQR = "") {
+        const usuarioId = document.getElementById('user-id').value;
+        var urlPrellenada = "https://google.com" + ID_FORMULARIO + "/viewform?usp=pp_url";
+        urlPrellenada += "&entry." + CAMPO_USUARIO + "=" + encodeURIComponent(usuarioId);
+        if (textoQR !== "") {
+            urlPrellenada += "&entry." + CAMPO_REUNION + "=" + encodeURIComponent(textoQR);
+        }
+        document.getElementById('boton-confirmar').href = urlPrellenada;
+    }
+
+    // Inicializamos el enlace con el usuario por defecto (USR-001)
+    actualizarEnlaceBase();
 
     if (!('BarcodeDetector' in window)) {
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
@@ -51,7 +67,7 @@
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
         document.getElementById('boton-confirmar').style.display = "none";
 
-        const fotoSeleccionada = archivos[0]; 
+        const fotoSeleccionada = archivos; 
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -63,8 +79,7 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados[0].rawValue;
-                        const usuarioId = document.getElementById('user-id').value;
+                        const textoQR = simbolosDetectados.rawValue;
 
                         document.getElementById('resultado').innerHTML = `
                             <div style="background:#fff3cd; color:#856404; padding:15px; border-radius:5px; border: 1px solid #ffeeba;">
@@ -73,12 +88,10 @@
                             </div>
                         `;
 
-                        // Armamos la dirección prellenada de forma clásica
-                        urlGlobalPrellenada = "https://google.com";
-                        urlGlobalPrellenada += "&entry.2133752850=" + encodeURIComponent(usuarioId);
-                        urlGlobalPrellenada += "&entry.1601257763=" + encodeURIComponent(textoQR);
+                        // Actualizamos el enlace final insertando los datos leídos del QR
+                        actualizarEnlaceBase(textoQR);
 
-                        // Hacemos visible el botón
+                        // Hacemos visible el botón nativo
                         document.getElementById('boton-confirmar').style.display = "block";
 
                     } else {
@@ -96,13 +109,6 @@
         };
         lectorArchivo.readAsDataURL(fotoSeleccionada);
     });
-
-    function redirigirAGoogle() {
-        if (urlGlobalPrellenada !== "") {
-            // Redirección directa en la misma pestaña para saltar el bloqueo de Google
-            window.location.href = urlGlobalPrellenada;
-        }
-    }
 </script>
 
 </body>
