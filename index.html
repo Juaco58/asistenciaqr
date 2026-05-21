@@ -10,6 +10,7 @@
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; }
         .btn-enlace { display: none; background: #28a745; color: white; text-decoration: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 15px; }
+        #canvas-oculto { display: none; }
     </style>
 </head>
 <body>
@@ -29,60 +30,98 @@
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 
-    <!-- Botón/Enlace real que abrirá Google Forms oficialmente -->
+    <!-- Botón que abrirá el formulario prellenado -->
     <a id="btn-enlace-google" class="btn-enlace" target="_blank">Confirmar en Google Forms 🚀</a>
 </div>
 
+<!-- Lienzo invisible para achicar fotos pesadas automáticamente -->
+<canvas id="canvas-oculto"></canvas>
+
 <script>
     // =======================================================
-    // CONFIGURACIÓN DE TU GOOGLE FORM (Completalo con tus datos)
+    // CONFIGURACIÓN DE TU GOOGLE FORM
     // =======================================================
-    const ID_FORMULARIO = "1FAIpQLSfXXXXXXXXXXXXX"; // El código largo de tu formulario
-    const NUMERO_CAMPO_USUARIO = "111111";         // El número de la pregunta 'usuario'
-    const NUMERO_CAMPO_REUNION = "222222";         // El número de la pregunta 'reunion'
+    const ID_FORMULARIO = "1FAIpQLSfXXXXXXXXXXXXX"; // Tu código largo de Google Form
+    const NUMERO_CAMPO_USUARIO = "111111";         // Número de la pregunta 'usuario'
+    const NUMERO_CAMPO_REUNION = "222222";         // Número de la pregunta 'reunion'
 
     if (!('BarcodeDetector' in window)) {
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
 
-    document.getElementById('qr-file-input').addEventListener('change', async function(e) {
+    document.getElementById('qr-file-input').addEventListener('change', function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
+        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Optimizando y leyendo imagen...</span>";
         document.getElementById('btn-enlace-google').style.display = "none";
 
-        try {
-            const bitmap = await createImageBitmap(archivos[0]); 
-            const detector = new BarcodeDetector({ formats: ['qr_code'] });
-            const simbolosDetectados = await detector.detect(bitmap);
+        const archivoOriginal = archivos[0];
+        const lector = new FileReader();
+        
+        lector.onload = function(event) {
+            const img = new Image();
+            img.onload = async function() {
+                // Forzamos que la foto se dibuje en un tamaño liviano de máximo 600px
+                const canvas = document.getElementById('canvas-oculto');
+                const ctx = canvas.getContext('2d');
+                
+                let ancho = img.width;
+                let alto = img.height;
+                const MAX_DIMENSION = 600;
+                
+                if (ancho > alto) {
+                    if (ancho > MAX_DIMENSION) {
+                        alto *= MAX_DIMENSION / ancho;
+                        ancho = MAX_DIMENSION;
+                    }
+                } else {
+                    if (alto > MAX_DIMENSION) {
+                        ancho *= MAX_DIMENSION / alto;
+                        alto = MAX_DIMENSION;
+                    }
+                }
+                
+                canvas.width = ancho;
+                canvas.height = alto;
+                ctx.drawImage(img, 0, 0, ancho, alto);
+                
+                try {
+                    // Analizamos la imagen ya reducida en tamaño
+                    const detector = new BarcodeDetector({ formats: ['qr_code'] });
+                    const simbolosDetectados = await detector.detect(canvas);
 
-            if (simbolosDetectados.length > 0) {
-                const textoQR = simbolosDetectados[0].rawValue;
-                const usuarioId = document.getElementById('user-id').value;
+                    if (simbolosDetectados.length > 0) {
+                        const textoQR = simbolosDetectados[0].rawValue;
+                        const usuarioId = document.getElementById('user-id').value;
 
-                // Construimos la URL de Google Forms prellenada de manera oficial
-                const urlGooglePrellenada = `https://google.com{ID_FORMULARIO}/viewform?entry.${NUMERO_CAMPO_USUARIO}=${encodeURIComponent(usuarioId)}&entry.${NUMERO_CAMPO_REUNION}=${encodeURIComponent(textoQR)}`;
+                        const urlGooglePrellenada = `https://google.com{ID_FORMULARIO}/viewform?entry.${NUMERO_CAMPO_USUARIO}=${encodeURIComponent(usuarioId)}&entry.${NUMERO_CAMPO_REUNION}=${encodeURIComponent(textoQR)}`;
 
-                document.getElementById('resultado').innerHTML = `
-                    <div style="background:#fff3cd; color:#856404; padding:10px; border-radius:5px;">
-                        <b>¡QR Detectado con éxito!</b><br>
-                        Reunión: ${textoQR}
-                    </div>
-                `;
+                        document.getElementById('resultado').innerHTML = `
+                            <div style="background:#fff3cd; color:#856404; padding:10px; border-radius:5px;">
+                                <b>¡QR Detectado con éxito!</b><br>
+                                Reunión: ${textoQR}
+                            </div>
+                        `;
 
-                // Configuramos el enlace del botón verde y lo hacemos visible
-                const botonEnlace = document.getElementById('btn-enlace-google');
-                botonEnlace.href = urlGooglePrellenada;
-                botonEnlace.style.display = "block";
+                        const botonEnlace = document.getElementById('btn-enlace-google');
+                        botonEnlace.href = urlGooglePrellenada;
+                        botonEnlace.style.display = "block";
 
-            } else {
-                document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se encontró ningún QR en la foto.</span>`;
-            }
-        } catch (err) {
-            document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error al procesar imagen.</span>";
-            console.error(err);
-        }
+                    } else {
+                        document.getElementById('resultado').innerHTML = `
+                            <span style="color:red;">❌ No se detectó el QR.</span><br>
+                            <small style="color:#666;">Asegurate de enfocar el código de frente y de cerca.</small>
+                        `;
+                    }
+                } catch (err) {
+                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error del lector nativo del celular.</span>";
+                    console.error(err);
+                }
+            };
+            img.src = event.target.result;
+        };
+        lector.readAsDataURL(archivoOriginal);
     });
 </script>
 
