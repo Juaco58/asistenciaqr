@@ -4,12 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistencia QR Nativa</title>
+    <!-- Cargamos el motor QR más compatible del mundo -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; }
-        .btn-enlace { display: none; background: #28a745; color: white; text-decoration: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 15px; display: none; }
+        .btn-enlace { display: none; background: #28a745; color: white; text-decoration: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 15px; }
         #canvas-oculto { display: none; }
     </style>
 </head>
@@ -30,23 +32,15 @@
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 
-    <!-- Botón con tus enlaces reales de Google configurados -->
     <a id="btn-enlace-google" class="btn-enlace" target="_blank">Confirmar en Google Forms 🚀</a>
 </div>
 
 <canvas id="canvas-oculto"></canvas>
 
 <script>
-    // =======================================================
-    // CONFIGURACIÓN REAL DE TU GOOGLE FORM (YA ASIGNADA)
-    // =======================================================
     const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
     const NUMERO_CAMPO_USUARIO = "2133752850";         
     const NUMERO_CAMPO_REUNION = "1601257763";         
-
-    if (!('BarcodeDetector' in window)) {
-        alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
-    }
 
     document.getElementById('qr-file-input').addEventListener('change', function(e) {
         const archivos = e.target.files;
@@ -55,12 +49,11 @@
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Optimizando y leyendo imagen...</span>";
         document.getElementById('btn-enlace-google').style.display = "none";
 
-        const archivoOriginal = archivos;
         const lector = new FileReader();
         
         lector.onload = function(event) {
             const img = new Image();
-            img.onload = async function() {
+            img.onload = function() {
                 const canvas = document.getElementById('canvas-oculto');
                 const ctx = canvas.getContext('2d');
                 
@@ -85,14 +78,18 @@
                 ctx.drawImage(img, 0, 0, ancho, alto);
                 
                 try {
-                    const detector = new BarcodeDetector({ formats: ['qr_code'] });
-                    const simbolosDetectados = await detector.detect(canvas);
+                    // Extraemos la matriz de píxeles puros de la imagen optimizada
+                    const datosImagen = ctx.getImageData(0, 0, ancho, alto);
+                    
+                    // Escaneamos con jsQR (Infalible en cualquier navegador)
+                    const codigoQR = jsQR(datosImagen.data, datosImagen.width, datosImagen.height, {
+                        inversionAttempts: "dontInvert"
+                    });
 
-                    if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados.rawValue;
+                    if (codigoQR && codigoQR.data) {
+                        const textoQR = codigoQR.data;
                         const usuarioId = document.getElementById('user-id').value;
 
-                        // Dirección exacta prellenada sin errores de letras
                         const urlGooglePrellenada = `https://google.com{ID_FORMULARIO}/viewform?usp=pp_url&entry.${NUMERO_CAMPO_USUARIO}=${encodeURIComponent(usuarioId)}&entry.${NUMERO_CAMPO_REUNION}=${encodeURIComponent(textoQR)}`;
 
                         document.getElementById('resultado').innerHTML = `
@@ -109,17 +106,17 @@
                     } else {
                         document.getElementById('resultado').innerHTML = `
                             <span style="color:red;">❌ No se detectó el QR.</span><br>
-                            <small style="color:#666;">Asegurate de enfocar el código de frente y de cerca.</small>
+                            <small style="color:#666;">Intentá que la foto salga más nítida, de cerca y bien iluminada.</small>
                         `;
                     }
                 } catch (err) {
-                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error del lector nativo del celular.</span>";
+                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error en el procesamiento de datos.</span>";
                     console.error(err);
                 }
             };
             img.src = event.target.result;
         };
-        lector.readAsDataURL(archivoOriginal);
+        lector.readAsDataURL(archivos[0]);
     });
 </script>
 
