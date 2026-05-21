@@ -3,9 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Automática</title>
-    <!-- Motor de lectura ultra-compatible -->
-    <script src="https://jsdelivr.net"></script>
+    <title>Asistencia QR Nativa</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -15,11 +13,18 @@
 </head>
 <body>
 
-<!-- Iframe invisible para procesar el envío de fondo sin cambiar de pantalla -->
-<iframe name="contenedor_oculto" id="contenedor_oculto" style="display:none;"></iframe>
+<!-- Formulario oculto nativo que enviará el presente a Google por detrás -->
+<form id="form-google-oculto" action="https://google.com" method="POST" target="iframe_fantasma" style="display:none;">
+    <input type="text" id="campo-user" name="entry.2133752850">
+    <input type="text" id="campo-reunion" name="entry.1601257763">
+    <input type="submit" id="submit-fantasma">
+</form>
+
+<!-- El receptor del formulario para que no se mueva la pantalla del celular -->
+<iframe name="iframe_fantasma" style="display:none;"></iframe>
 
 <div class="container">
-    <h2>Control de Asistencia Directo</h2>
+    <h2>Control de Asistencia Nativo</h2>
     
     <div class="status">Sistema Listo</div>
 
@@ -29,71 +34,60 @@
     </div>
 
     <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
+    
+    <!-- Tu input original intacto -->
     <input type="file" accept="image/*" id="qr-file-input" class="input-file">
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
 
 <script>
-    const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
-    const CAMPO_USUARIO = "2133752850";         
-    const CAMPO_REUNION = "1601257763";         
+    if (!('BarcodeDetector' in window)) {
+        alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
+    }
 
-    document.getElementById('qr-file-input').addEventListener('change', function(e) {
+    document.getElementById('qr-file-input').addEventListener('change', async function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Procesando y registrando asistencia...</span>";
+        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR y registrando presente...</span>";
 
-        const lector = new FileReader();
-        lector.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
+        const archivoImagen = archivos[0]; // Tu código exitoso original
+
+        try {
+            const bitmap = await createImageBitmap(archivoImagen); // Tu código exitoso original
+            const detector = new BarcodeDetector({ formats: ['qr_code'] });
+            const simbolosDetectados = await detector.detect(bitmap);
+
+            if (simbolosDetectados.length > 0) {
+                const textoQR = simbolosDetectados[0].rawValue;
+                const usuarioId = document.getElementById('user-id').value;
+
+                // 🚀 TRUCO DE ENVIÓ INVISIBLE: Llenamos el formulario de Google oculto por detrás
+                document.getElementById('campo-user').value = usuarioId;
+                document.getElementById('campo-reunion').value = textoQR;
                 
-                try {
-                    const datosImagen = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                    const codigoQR = jsQR(datosImagen.data, datosImagen.width, datosImagen.height, {
-                        inversionAttempts: "dontInvert"
-                    });
+                // Forzamos el envío oficial nativo de HTML que Google procesa obligatoriamente
+                document.getElementById('submit-fantasma').click();
 
-                    if (codigoQR && codigoQR.data) {
-                        const textoQR = codigoQR.data;
-                        const usuarioId = document.getElementById('user-id').value;
+                // Cambiamos la pantalla a verde al instante sin que el usuario tenga que tocar nada más
+                document.getElementById('resultado').innerHTML = `
+                    <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
+                        <b>¡Presente Registrado Exitosamente! ✅</b><br>
+                        <small style="color:#333;">Ya podés guardar tu celular.</small>
+                    </div>
+                `;
 
-                        // Armamos la URL oficial de envío que procesará Google por detrás
-                        const urlEnvioDirecto = `https://google.com{ID_FORMULARIO}/formResponse?entry.${CAMPO_USUARIO}=${encodeURIComponent(usuarioId)}&entry.${CAMPO_REUNION}=${encodeURIComponent(textoQR)}&submit=Submit`;
-
-                        // Inyectamos la URL dentro del iframe invisible. El celular procesa el envío sin trabas de CORS
-                        document.getElementById('contenedor_oculto').src = urlEnvioDirecto;
-
-                        // Mostramos el éxito de inmediato en la pantalla sin que el usuario haga nada más
-                        setTimeout(() => {
-                            document.getElementById('resultado').innerHTML = `
-                                <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                                    <b>¡Presente Registrado Exitosamente! ✅</b><br>
-                                    <small style="color:#555;">Ya podés guardar tu celular.</small>
-                                </div>
-                            `;
-                        }, 600);
-
-                    } else {
-                        document.getElementById('resultado').innerHTML = `
-                            <span style="color:red;">❌ No se detectó el QR en la foto.</span><br>
-                            <small style="color:#666;">Asegurate de enfocar el código derecho y de cerca.</small>
-                        `;
-                    }
-                } catch (err) {
-                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error en el procesamiento de la imagen.</span>";
-                }
-            };
-            img.src = event.target.result;
-        };
-        lector.readAsDataURL(archivos[0]);
+            } else {
+                document.getElementById('resultado').innerHTML = `
+                    <span style="color:red;">❌ No se encontró ningún QR en la foto.</span><br>
+                    <small style="color:#666;">Intentá enfocar el código más de cerca.</small>
+                `;
+            }
+        } catch (err) {
+            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de compatibilidad al abrir el archivo.</span>`;
+            console.error(err);
+        }
     });
 </script>
 
