@@ -33,6 +33,7 @@
 <img id="img-temporal">
 
 <script>
+    <script>
     if (!('BarcodeDetector' in window)) {
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
@@ -40,6 +41,10 @@
     document.getElementById('qr-file-input').addEventListener('change', function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
+
+        // Guardamos referencias a los inputs para poder manipularlos
+        const inputArchivo = document.getElementById('qr-file-input');
+        const inputUsuario = document.getElementById('user-id');
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
@@ -56,9 +61,9 @@
 
                     if (simbolosDetectados.length > 0) {
                         const textoQR = simbolosDetectados[0].rawValue;
-                        const usuarioId = document.getElementById('user-id').value;
+                        const usuarioId = inputUsuario.value;
 
-                        const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
+                        const SUPABASE_URL = "https://supabase.co";
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
                         
                         const cabeceras = {
@@ -70,7 +75,7 @@
 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Buscando usuario '" + usuarioId + "'...</span>";
 
-                        // 🔍 PROCESO 1: GET USUARIOS (Ruta oficial de la API corregida)
+                        // 🔍 PROCESO 1: GET USUARIOS
                         const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
                         
                         let respuestaUsuario;
@@ -103,7 +108,7 @@
                         const nombreReal = datosUsuario[0].nombre; 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
-                        // 🚀 PROCESO 2: POST ASISTENCIAS (Ruta oficial de la API corregida)
+                        // 🚀 PROCESO 2: POST ASISTENCIAS
                         const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
                         const respuestaAsistencia = await fetch(urlAsistencias, {
                             method: 'POST',
@@ -119,11 +124,22 @@
                             throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
 
+                        // 🕒 MEJORA 2: Calcular la hora local del celular en formato legible (HH:MM)
+                        const ahora = new Date();
+                        const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " hs";
+
+                        // 🔒 MEJORA 1: Bloquear campos y cambiar estilo visual del botón para denotar éxito
+                        inputArchivo.disabled = true;
+                        inputUsuario.disabled = true;
+                        inputArchivo.style.background = "#6c757d";
+                        inputArchivo.style.cursor = "not-allowed";
+
                         document.getElementById('resultado').innerHTML = `
                             <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
                                 <b>¡Presente Confirmado! ✅</b><br>
                                 Bienvenido/a, <b>${nombreReal}</b>.<br>
-                                <small style="color:#555;">Asistencia registrada automáticamente en la nube.</small>
+                                <span style="color:#155724; font-size: 14px;">Registrado localmente a las <b>${horaLocal}</b>.</span><br>
+                                <small style="color:#555; display:block; margin-top:5px;">Comprobante digital válido en la nube.</small>
                             </div>
                         `;
 
@@ -144,6 +160,7 @@
         lectorArchivo.readAsDataURL(fotoSeleccionada);
     });
 </script>
+
 
 </body>
 </html>
