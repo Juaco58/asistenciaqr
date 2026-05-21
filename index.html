@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistencia QR Nativa</title>
+    <!-- Cargamos el conector oficial de Supabase aprobado para navegadores web -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -35,6 +37,11 @@
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
 
+    // Inicializamos la conexión segura mediante la librería oficial
+    const SUPABASE_URL = "https://supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
+    const supabaseClient = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
     document.getElementById('qr-file-input').addEventListener('change', async function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
@@ -52,38 +59,49 @@
                 const textoQR = simbolosDetectados[0].rawValue;
                 const usuarioId = document.getElementById('user-id').value;
 
-                document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando con el servidor...</span>";
+                document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Verificando credenciales en el servidor...</span>";
 
-                const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
+                // 🔍 PASO 1: VALIDAR SI EL USUARIO EXISTE
+                const { data: datosUsuario, error: errorBusqueda } = await supabaseClient
+                    .from('usuarios')
+                    .select('nombre')
+                    .eq('id', usuarioId);
 
-                // 🚀 CORRECCIÓN CLAVE: Agregamos la tabla 'asistencias' directamente al enlace final
-                const urlDestino = "https://supabase.co";
+                // Manejo de errores de conexión o columnas incorrectas
+                if (errorBusqueda) {
+                    throw new Error("Error al consultar la tabla usuarios: " + errorBusqueda.message);
+                }
 
-                const respuesta = await fetch(urlDestino, {
-                    method: 'POST',
-                    mode: 'cors', // Forzamos al navegador del celular a abrir los canales de red externos
-                    headers: {
-                        'apikey': apiKey,
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=minimal'
-                    },
-                    body: JSON.stringify({
-                        usuario_id: usuarioId,
-                        reunion_id: textoQR
-                    })
-                });
+                if (!datosUsuario || datosUsuario.length === 0) {
+                    document.getElementById('resultado').innerHTML = `
+                        <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
+                            <b>❌ Acceso Denegado</b><br>
+                            El ID de usuario <b>${usuarioId}</b> no figura en el listado.
+                        </div>
+                    `;
+                    return; 
+                }
 
-                if (!respuesta.ok) {
-                    const textoError = await respuesta.text();
-                    throw new Error("El servidor rechazó los datos: " + textoError);
+                // El usuario existe, procedemos a guardar el presente
+                const nombreReal = datosUsuario[0].nombre;
+                document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Registrando asistencia en la nube...</span>";
+
+                // 🚀 PASO 2: GUARDAR EL PRESENTE EN LA TABLA 'asistencias'
+                const { error: errorAsistencia } = await supabaseClient
+                    .from('asistencias')
+                    .insert([
+                        { usuario_id: usuarioId, reunion_id: textoQR }
+                    ]);
+
+                if (errorAsistencia) {
+                    throw new Error("Error al escribir en la tabla asistencias: " + errorAsistencia.message);
                 }
 
                 document.getElementById('resultado').innerHTML = `
                     <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                        <b>¡Presente Validado y Guardado!</b><br>
-                        Usuario: ${usuarioId}<br>
-                        Reunión: ${textoQR}
+                        <b>¡Presente Confirmado!</b><br>
+                        Bienvenido/a: <b>${nombreReal}</b><br>
+                        Reunión registrada: ${textoQR}
                     </div>
                 `;
             } else {
@@ -93,7 +111,8 @@
                 `;
             }
         } catch (err) {
-            document.getElementById('resultado').innerHTML = `<span style="color:red;">⚠️ Error: ${err.message || err}</span>`;
+            // Si hay un error de columnas o de base de datos, el servidor te va a decir la causa exacta en la pantalla
+            document.getElementById('resultado').innerHTML = `<span style="color:red; text-align:left; display:block;">⚠️ Detalle Técnico: ${err.message || err}</span>`;
             console.error(err);
         }
     });
