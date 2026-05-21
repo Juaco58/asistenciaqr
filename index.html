@@ -93,7 +93,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; // 🌟 REPARADO: Volvemos a extraer el archivo individual nativo exitoso
+        const fotoSeleccionada = archivos[0]; // 🌟 ARREGLADO: Extracción individual nativa recuperada
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
