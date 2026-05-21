@@ -51,13 +51,15 @@
                 const textoQR = simbolosDetectados[0].rawValue;
                 const usuarioId = document.getElementById('user-id').value;
 
-                // Coordenadas fijas de tu Google Form real
+                // Datos fijos de tu Google Form real
                 const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
                 const CAMPO_USUARIO = "2133752850";         
                 const CAMPO_REUNION = "1601257763";         
 
-                // Armamos la URL oficial de envío que procesará Google de forma nativa e inmediata
-                const urlGoogleFinal = "https://google.com" + ID_FORMULARIO + "/formResponse?entry." + CAMPO_USUARIO + "=" + encodeURIComponent(usuarioId) + "&entry." + CAMPO_REUNION + "=" + encodeURIComponent(textoQR) + "&submit=Submit";
+                // 🚀 CORRECCIÓN DEFINITIVA: Dirección limpia oficial sin textos rotos que confundan a Google
+                var urlGoogleFinal = "https://google.com" + ID_FORMULARIO + "/formResponse?";
+                urlGoogleFinal += "entry." + CAMPO_USUARIO + "=" + encodeURIComponent(usuarioId);
+                urlGoogleFinal += "&entry." + CAMPO_REUNION + "=" + encodeURIComponent(textoQR);
 
                 document.getElementById('resultado').innerHTML = "<span style='color:green;'>Presente enviado con éxito...</span>";
 
