@@ -10,7 +10,6 @@
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
         #img-temporal { display: none; }
-        /* 🌟 Nuevo estilo para el botón de cambio de ID */
         .btn-cambiar { background: #6c757d; color: white; border: none; padding: 6px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; margin-left: 5px; vertical-align: middle; }
         .btn-cambiar:hover { background: #5a6268; }
     </style>
@@ -25,7 +24,6 @@
     <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
         <label><b>Tu ID de Usuario asignado:</b></label>
         <div style="display: flex; margin-top: 5px;">
-            <!-- 🌟 Cambiado: Ajuste de ancho para que entre el botón al lado -->
             <input type="text" id="user-id" style="width: 75%; padding: 8px; box-sizing: border-box;" placeholder="Ej: USR-001">
             <button type="button" id="btn-editar-id" class="btn-cambiar">Cambiar</button>
         </div>
@@ -48,25 +46,22 @@
     const botonEditar = document.getElementById('btn-editar-id');
     const idGuardado = localStorage.getItem('asistencia_user_id');
     
-    // Verificación inicial de memoria
     if (idGuardado) {
         inputUsuario.value = idGuardado;
         inputUsuario.disabled = true;
         inputUsuario.style.background = "#e9ecef";
         botonEditar.textContent = "Cambiar";
     } else {
-        botonEditar.style.display = "none"; // Si no hay nada guardado, ocultamos el botón temporalmente
+        botonEditar.style.display = "none"; 
     }
 
-    // 🌟 NUEVO: Lógica del botón Cambiar / Cerrar Sesión
     botonEditar.addEventListener('click', function() {
-        localStorage.removeItem('asistencia_user_id'); // Borra la memoria interna
+        localStorage.removeItem('asistencia_user_id'); 
         inputUsuario.value = "";
         inputUsuario.disabled = false;
-        inputUsuario.style.background = "#white";
-        botonEditar.style.display = "none"; // Se oculta hasta el próximo registro exitoso
+        inputUsuario.style.background = "white";
+        botonEditar.style.display = "none"; 
         
-        // Si el usuario ya había fichado y quiere cambiar de cuenta, refrescamos los controles de asistencia
         const inputArchivo = document.getElementById('qr-file-input');
         inputArchivo.disabled = false;
         inputArchivo.style.background = "#007bff";
@@ -74,7 +69,6 @@
         document.getElementById('resultado').innerHTML = "";
     });
 
-    // Monitorear cuando el usuario tipea manualmente para mostrar el botón si escribe algo
     inputUsuario.addEventListener('input', function() {
         if (inputUsuario.value.trim().length > 0) {
             botonEditar.textContent = "Limpiar";
@@ -99,7 +93,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos; 
+        const fotoSeleccionada = archivos[0]; // 🌟 REPARADO: Volvemos a extraer el archivo individual nativo exitoso
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -111,7 +105,7 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados.rawValue;
+                        const textoQR = simbolosDetectados[0].rawValue;
 
                         const SUPABASE_URL = "https://supabase.co";
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
@@ -155,7 +149,7 @@
                             return; 
                         }
 
-                        const nombreReal = datosUsuario.nombre; 
+                        const nombreReal = datosUsuario[0].nombre; 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
                         // 🚀 PROCESO 2: POST ASISTENCIAS
@@ -174,20 +168,16 @@
                             throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
 
-                        // Guardar ID real validado en el teléfono
                         localStorage.setItem('asistencia_user_id', usuarioId);
 
-                        // OBTENER HORA LOCAL
                         const ahora = new Date();
                         const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                        // BLOQUEO DE INPUTS Y AJUSTE DE BOTÓN
                         inputArchivo.disabled = true;
                         inputUsuario.disabled = true;
                         inputArchivo.style.background = "#6c757d";
                         inputArchivo.style.cursor = "not-allowed";
                         
-                        // 🌟 Cambiamos el texto del botón tras el éxito para que sirva de salida
                         botonEditar.textContent = "Salir";
                         botonEditar.style.display = "inline-block";
 
