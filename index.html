@@ -97,7 +97,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos; // 🌟 Extracción individual nativa reparada
+        const fotoSeleccionada = archivos[0]; // 🌟 REPARADO: Volvemos a extraer el archivo individual correctamente con [0]
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -109,7 +109,7 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados.rawValue;
+                        const textoQR = simbolosDetectados[0].rawValue;
 
                         const SUPABASE_URL = "https://supabase.co";
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
@@ -140,7 +140,7 @@
                             return; 
                         }
 
-                        const nombreReal = datosUsuario.nombre; 
+                        const nombreReal = datosUsuario[0].nombre; 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
                         // 🚀 PROCESO 2: POST ASISTENCIAS
