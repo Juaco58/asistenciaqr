@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Escudo de seguridad para habilitar conexiones externas -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://supabase.co; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://supabase.co;">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://supabase.co https://jsdelivr.net; script-src 'self' 'unsafe-inline' https://jsdelivr.net; style-src 'self' 'unsafe-inline'; connect-src 'self' https://supabase.co;">
     <title>Asistencia QR Profesional</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
@@ -15,6 +14,8 @@
         .btn-cambiar { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; margin-left: 5px; vertical-align: middle; }
         .btn-cambiar:hover { background: #5a6268; }
     </style>
+    <!-- 🌟 Motor universal de lectura QR para que ande en cualquier celular -->
+    <script src="https://jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
 </head>
 <body>
 
@@ -40,8 +41,6 @@
 <img id="img-temporal">
 
 <script>
-    const tieneLectorNativo = ('BarcodeDetector' in window);
-
     const inputUsuario = document.getElementById('user-id');
     const botonEditar = document.getElementById('btn-editar-id');
     const idGuardado = localStorage.getItem('asistencia_user_id');
@@ -91,101 +90,40 @@
             return;
         }
 
-        if (!tieneLectorNativo) {
-            document.getElementById('resultado').innerHTML = `<span style="color:orange;">⚠️ Tu dispositivo no soporta el escaneo nativo.</span>`;
-            inputArchivo.value = "";
-            return;
-        }
-
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos; // 🌟 REPARADO: Volvemos a extraer el archivo individual correctamente
+        const fotoSeleccionada = archivos[0]; 
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
             const imagenInvisble = document.getElementById('img-temporal');
             
-            imagenInvisble.onload = async function() {
+            imagenInvisble.onload = function() {
                 try {
-                    const detector = new BarcodeDetector({ formats: ['qr_code'] });
-                    const simbolosDetectados = await detector.detect(imagenInvisble);
+                    // Procesamiento universal usando un lienzo (canvas) interno
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = imagenInvisble.width;
+                    canvas.height = imagenInvisble.height;
+                    ctx.drawImage(imagenInvisble, 0, 0, canvas.width, canvas.height);
+                    
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    
+                    // Invoca a la librería universal jsQR
+                    const codigoDetectado = jsQR(imageData.data, imageData.width, imageData.height, {
+                        inversionAttempts: "dontInvert",
+                    });
 
-                    if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados.rawValue;
-
-                        const SUPABASE_URL = "https://supabase.co";
-                        const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
-                        
-                        const cabeceras = {
-                            'apikey': apiKey,
-                            'Authorization': 'Bearer ' + apiKey,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        };
-
-                        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Buscando usuario '" + usuarioId + "'...</span>";
-
-                        // 🔍 PROCESO 1: GET USUARIOS
-                        const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
-                        const respuestaUsuario = await fetch(urlUsuarios, { method: 'GET', headers: cabeceras });
-                        
-                        if (!respuestaUsuario.ok) throw new Error("Error de respuesta al buscar usuario.");
-                        
-                        const datosUsuario = await respuestaUsuario.json();
-
-                        if (!datosUsuario || datosUsuario.length === 0) {
-                            document.getElementById('resultado').innerHTML = `
-                                <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
-                                    <b>❌ Acceso Denegado</b><br>El ID de usuario <b>${usuarioId}</b> no figura en la tabla 'usuarios'.
-                                </div>
-                            `;
-                            return; 
-                        }
-
-                        const nombreReal = datosUsuario.nombre; 
-                        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
-
-                        // 🚀 PROCESO 2: POST ASISTENCIAS
-                        const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
-                        const respuestaAsistencia = await fetch(urlAsistencias, {
-                            method: 'POST',
-                            headers: { ...cabeceras, 'Prefer': 'return=minimal' },
-                            body: JSON.stringify({
-                                usuario_id: usuarioId,
-                                reunion_id: textoQR
-                            })
-                        });
-
-                        if (!respuestaAsistencia.ok) throw new Error("Error al insertar asistencia.");
-
-                        localStorage.setItem('asistencia_user_id', usuarioId);
-
-                        const ahora = new Date();
-                        const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                        inputArchivo.disabled = true;
-                        inputUsuario.disabled = true;
-                        inputArchivo.style.background = "#6c757d";
-                        inputArchivo.style.cursor = "not-allowed";
-                        botonEditar.textContent = "Salir";
-                        botonEditar.style.display = "inline-block";
-
-                        document.getElementById('resultado').innerHTML = `
-                            <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                                <b>¡Presente Confirmado! ✅</b><br>
-                                Bienvenido/a, <b>${nombreReal}</b>.<br>
-                                <span style="color:#155724; font-size: 14px;">Registrado localmente a las <b>${horaLocal}</b>.</span><br>
-                                <small style="color:#555; display:block; margin-top:5px;">Comprobante digital válido en la nube.</small>
-                            </div>
-                        `;
-
+                    if (codigoDetectado) {
+                        const textoQR = codigoDetectado.data;
+                        enviarAsistencia(textoQR, usuarioId, inputArchivo);
                     } else {
-                        document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se detectó ningún QR en la foto.</span>`;
+                        document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se detectó ningún QR en la foto. Intentá con otra imagen más nítida.</span>`;
                     }
                 } catch (err) {
                     document.getElementById('resultado').innerHTML = `
                         <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; text-align:left; font-size:14px;">
-                            <b>⚠️ Alerta del Servidor:</b><br>${err.message}
+                            <b>⚠️ Error de Procesamiento:</b><br>${err.message}
                         </div>
                     `;
                 }
@@ -194,6 +132,81 @@
         };
         lectorArchivo.readAsDataURL(fotoSeleccionada);
     });
+
+    async function enviarAsistencia(textoQR, usuarioId, inputArchivo) {
+        try {
+            const SUPABASE_URL = "https://supabase.co";
+            const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
+            
+            const cabeceras = {
+                'apikey': apiKey,
+                'Authorization': 'Bearer ' + apiKey,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            };
+
+            document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Buscando usuario '" + usuarioId + "'...</span>";
+
+            const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
+            const respuestaUsuario = await fetch(urlUsuarios, { method: 'GET', headers: cabeceras });
+            
+            if (!respuestaUsuario.ok) throw new Error("Error de respuesta al buscar usuario.");
+            
+            const datosUsuario = await respuestaUsuario.json();
+
+            if (!datosUsuario || datosUsuario.length === 0) {
+                document.getElementById('resultado').innerHTML = `
+                    <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
+                        <b>❌ Acceso Denegado</b><br>El ID de usuario <b>${usuarioId}</b> no figura en la tabla 'usuarios'.
+                    </div>
+                `;
+                return; 
+            }
+
+            const nombreReal = datosUsuario[0].nombre; 
+            document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
+
+            const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
+            const respuestaAsistencia = await fetch(urlAsistencias, {
+                method: 'POST',
+                headers: { ...cabeceras, 'Prefer': 'return=minimal' },
+                body: JSON.stringify({
+                    usuario_id: usuarioId,
+                    reunion_id: textoQR
+                })
+            });
+
+            if (!respuestaAsistencia.ok) throw new Error("Error al insertar asistencia.");
+
+            localStorage.setItem('asistencia_user_id', usuarioId);
+
+            const ahora = new Date();
+            const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            inputArchivo.disabled = true;
+            inputUsuario.disabled = true;
+            inputArchivo.style.background = "#6c757d";
+            inputArchivo.style.cursor = "not-allowed";
+            botonEditar.textContent = "Salir";
+            botonEditar.style.display = "inline-block";
+
+            document.getElementById('resultado').innerHTML = `
+                <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
+                    <b>¡Presente Confirmado! ✅</b><br>
+                    Bienvenido/a, <b>${nombreReal}</b>.<br>
+                    <span style="color:#155724; font-size: 14px;">Registrado localmente a las <b>${horaLocal}</b>.</span><br>
+                    <small style="color:#555; display:block; margin-top:5px;">Comprobante digital válido en la nube.</small>
+                </div>
+            `;
+
+        } catch (err) {
+            document.getElementById('resultado').innerHTML = `
+                <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; text-align:left; font-size:14px;">
+                    <b>⚠️ Alerta del Servidor:</b><br>${err.message}
+                </div>
+            `;
+        }
+    }
 </script>
 
 </body>
