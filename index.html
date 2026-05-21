@@ -40,7 +40,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Procesando y registrando presente...</span>";
 
-        const archivoImagen = archivos[0]; 
+        const archivoImagen = archivos; 
 
         try {
             const bitmap = await createImageBitmap(archivoImagen);
@@ -48,23 +48,36 @@
             const simbolosDetectados = await detector.detect(bitmap);
 
             if (simbolosDetectados.length > 0) {
-                const textoQR = simbolosDetectados[0].rawValue;
+                const textoQR = simbolosDetectados.rawValue;
                 const usuarioId = document.getElementById('user-id').value;
 
-                // Datos fijos de tu Google Form real
-                const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
-                const CAMPO_USUARIO = "2133752850";         
-                const CAMPO_REUNION = "1601257763";         
+                // 🚀 SISTEMA DE ENVÍO INDESTRUCTIBLE POST NATIVO
+                // Creamos un formulario real dinámico en memoria (salta el bloqueo de URL)
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = 'https://google.com';
 
-                // 🚀 CORRECCIÓN DEFINITIVA: Dirección limpia oficial sin textos rotos que confundan a Google
-                var urlGoogleFinal = "https://google.com" + ID_FORMULARIO + "/formResponse?";
-                urlGoogleFinal += "entry." + CAMPO_USUARIO + "=" + encodeURIComponent(usuarioId);
-                urlGoogleFinal += "&entry." + CAMPO_REUNION + "=" + encodeURIComponent(textoQR);
+                // Añadimos el casillero de usuario
+                const inputUser = document.createElement('input');
+                inputUser.type = 'hidden';
+                inputUser.name = 'entry.2133752850';
+                inputUser.value = usuarioId;
+                form.appendChild(inputUser);
 
-                document.getElementById('resultado').innerHTML = "<span style='color:green;'>Presente enviado con éxito...</span>";
+                // Añadimos el casillero de reunión
+                const inputReunion = document.createElement('input');
+                inputReunion.type = 'hidden';
+                inputReunion.name = 'entry.1601257763';
+                inputReunion.value = textoQR;
+                form.appendChild(inputReunion);
 
-                // Redirigimos la pestaña del celular hacia el éxito de Google de forma transparente
-                window.location.href = urlGoogleFinal;
+                // Enganchamos el formulario a la página y lo enviamos oficialmente
+                document.body.appendChild(form);
+                
+                document.getElementById('resultado').innerHTML = "<span style='color:green;'>¡Redirigiendo a confirmación de Google!</span>";
+                
+                // Ejecuta la acción oficial de envío que Google acepta de forma obligatoria
+                form.submit(); [1.35]
 
             } else {
                 document.getElementById('resultado').innerHTML = `
