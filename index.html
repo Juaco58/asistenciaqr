@@ -3,42 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Directa</title>
+    <title>Asistencia QR Automática</title>
+    <!-- Motor de lectura ultra-compatible -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; margin-bottom: 20px; }
-        .btn-confirmar { background: #28a745; color: white; border: none; padding: 16px 20px; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
-        input[type="text"] { width: 95%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
+        .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
+        .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
     </style>
 </head>
 <body>
+
+<!-- Iframe invisible para procesar el envío de fondo sin cambiar de pantalla -->
+<iframe name="contenedor_oculto" id="contenedor_oculto" style="display:none;"></iframe>
 
 <div class="container">
     <h2>Control de Asistencia Directo</h2>
     
     <div class="status">Sistema Listo</div>
 
-    <!-- Formulario nativo puro que el celular no puede bloquear bajo ningún concepto -->
-    <form action="https://google.com" method="GET" target="_blank">
-        
-        <!-- Parámetro oculto para avisar a Google que va con datos prellenados -->
-        <input type="hidden" name="usp" value="pp_url">
+    <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
+        <label><b>Tu ID de Usuario asignado:</b></label>
+        <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
+    </div>
 
-        <div style="text-align: left;">
-            <label><b>1. Escribí tu ID de Usuario:</b></label>
-            <input type="text" name="entry.2133752850" value="USR-001" required>
-        </div>
-
-        <div style="text-align: left;">
-            <label><b>2. Copiá o escribí el código del QR:</b></label>
-            <input type="text" name="entry.1601257763" value="https://me-qr.com" required>
-        </div>
-
-        <!-- Botón de envío estándar de HTML -->
-        <button type="submit" class="btn-confirmar">CONFIRMAR PRESENTE 🚀</button>
-    </form>
+    <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
+    <input type="file" accept="image/*" id="qr-file-input" class="input-file">
+    
+    <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
+
+<script>
+    const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
+    const CAMPO_USUARIO = "2133752850";         
+    const CAMPO_REUNION = "1601257763";         
+
+    document.getElementById('qr-file-input').addEventListener('change', function(e) {
+        const archivos = e.target.files;
+        if (archivos.length === 0) return;
+
+        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Procesando y registrando asistencia...</span>";
+
+        const lector = new FileReader();
+        lector.onload = function(event) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                
+                try {
+                    const datosImagen = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const codigoQR = jsQR(datosImagen.data, datosImagen.width, datosImagen.height, {
+                        inversionAttempts: "dontInvert"
+                    });
+
+                    if (codigoQR && codigoQR.data) {
+                        const textoQR = codigoQR.data;
+                        const usuarioId = document.getElementById('user-id').value;
+
+                        // Armamos la URL oficial de envío que procesará Google por detrás
+                        const urlEnvioDirecto = `https://google.com{ID_FORMULARIO}/formResponse?entry.${CAMPO_USUARIO}=${encodeURIComponent(usuarioId)}&entry.${CAMPO_REUNION}=${encodeURIComponent(textoQR)}&submit=Submit`;
+
+                        // Inyectamos la URL dentro del iframe invisible. El celular procesa el envío sin trabas de CORS
+                        document.getElementById('contenedor_oculto').src = urlEnvioDirecto;
+
+                        // Mostramos el éxito de inmediato en la pantalla sin que el usuario haga nada más
+                        setTimeout(() => {
+                            document.getElementById('resultado').innerHTML = `
+                                <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
+                                    <b>¡Presente Registrado Exitosamente! ✅</b><br>
+                                    <small style="color:#555;">Ya podés guardar tu celular.</small>
+                                </div>
+                            `;
+                        }, 600);
+
+                    } else {
+                        document.getElementById('resultado').innerHTML = `
+                            <span style="color:red;">❌ No se detectó el QR en la foto.</span><br>
+                            <small style="color:#666;">Asegurate de enfocar el código derecho y de cerca.</small>
+                        `;
+                    }
+                } catch (err) {
+                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error en el procesamiento de la imagen.</span>";
+                }
+            };
+            img.src = event.target.result;
+        };
+        lector.readAsDataURL(archivos[0]);
+    });
+</script>
 
 </body>
 </html>
