@@ -9,7 +9,7 @@
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
-        .btn-google { display: none; background: #28a745; color: white; text-decoration: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 20px; display: inline-block; box-sizing: border-box; width: 100%; }
+        .btn-google { display: none; background: #28a745; color: white; border: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 20px; cursor: pointer; width: 100%; box-sizing: border-box; }
         #img-temporal { display: none; }
     </style>
 </head>
@@ -30,14 +30,16 @@
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 
-    <!-- Enlace listo para recibir la URL armada -->
-    <a id="boton-confirmar" class="btn-google" target="_blank">2. CONFIRMAR PRESENTE 🚀</a>
+    <!-- Modificado a un Botón de acción real controlado por JavaScript -->
+    <button id="boton-confirmar" class="btn-google" onclick="redirigirAGoogle()">2. CONFIRMAR PRESENTE 🚀</button>
 </div>
 
-<!-- Elemento de imagen invisible para cargar la foto de forma ultra-compatible -->
 <img id="img-temporal">
 
 <script>
+    // Variable global para guardar la ruta una vez detectada
+    let urlGlobalPrellenada = "";
+
     if (!('BarcodeDetector' in window)) {
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
@@ -49,7 +51,7 @@
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
         document.getElementById('boton-confirmar').style.display = "none";
 
-        const fotoSeleccionada = archivos[0]; // Extraemos explícitamente el archivo de imagen individual
+        const fotoSeleccionada = archivos[0]; 
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -57,7 +59,6 @@
             
             imagenInvisble.onload = async function() {
                 try {
-                    // El detector analiza directamente el elemento de imagen clásico cargado, salteando bloqueos
                     const detector = new BarcodeDetector({ formats: ['qr_code'] });
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
@@ -72,14 +73,13 @@
                             </div>
                         `;
 
-                        // Armamos la dirección prellenada uniendo los textos de forma clásica
-                        var urlPrellenada = "https://google.com";
-                        urlPrellenada += "&entry.2133752850=" + encodeURIComponent(usuarioId);
-                        urlPrellenada += "&entry.1601257763=" + encodeURIComponent(textoQR);
+                        // Armamos la dirección prellenada de forma clásica
+                        urlGlobalPrellenada = "https://google.com";
+                        urlGlobalPrellenada += "&entry.2133752850=" + encodeURIComponent(usuarioId);
+                        urlGlobalPrellenada += "&entry.1601257763=" + encodeURIComponent(textoQR);
 
-                        const boton = document.getElementById('boton-confirmar');
-                        boton.href = urlPrellenada;
-                        boton.style.display = "block";
+                        // Hacemos visible el botón
+                        document.getElementById('boton-confirmar').style.display = "block";
 
                     } else {
                         document.getElementById('resultado').innerHTML = `
@@ -92,14 +92,17 @@
                     console.error(err);
                 }
             };
-
-            // Pasamos los datos binarios optimizados a la etiqueta de imagen
             imagenInvisble.src = eventoUrl.target.result;
         };
-
-        // Convertimos la foto cruda a una URL de datos locales segura para el navegador
         lectorArchivo.readAsDataURL(fotoSeleccionada);
     });
+
+    function redirigirAGoogle() {
+        if (urlGlobalPrellenada !== "") {
+            // Redirección directa en la misma pestaña para saltar el bloqueo de Google
+            window.location.href = urlGlobalPrellenada;
+        }
+    }
 </script>
 
 </body>
