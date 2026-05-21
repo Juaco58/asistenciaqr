@@ -46,7 +46,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; // 🌟 Corregido: Volvemos a extraer el archivo individual correctamente
+        const fotoSeleccionada = archivos[0]; // ✨ CORREGIDO: Extraemos el primer archivo correctamente
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -58,7 +58,7 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados[0].rawValue; // 🌟 Corregido: Volvemos al índice original nativo
+                        const textoQR = simbolosDetectados[0].rawValue;
                         const usuarioId = inputUsuario.value;
 
                         const SUPABASE_URL = "https://supabase.co";
@@ -103,7 +103,7 @@
                             return; 
                         }
 
-                        const nombreReal = datosUsuario[0].nombre; 
+                        const nombreReal = datosUsuario[0].nombre; // Formato array de Supabase REST
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
                         // 🚀 PROCESO 2: POST ASISTENCIAS
