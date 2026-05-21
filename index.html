@@ -9,7 +9,6 @@
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
-        #img-temporal { display: none; }
     </style>
 </head>
 <body>
@@ -30,7 +29,7 @@
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
 
-<img id="img-temporal">
+<img id="img-temporal" style="display:none;">
 
 <script>
     if (!('BarcodeDetector' in window)) {
@@ -43,7 +42,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
 
-        const fotoSeleccionada = archivos[0]; 
+        const fotoSeleccionada = archivos; 
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -55,35 +54,19 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados[0].rawValue;
+                        const textoQR = simbolosDetectados.rawValue;
                         const usuarioId = document.getElementById('user-id').value;
 
-                        document.getElementById('resultado').innerHTML = "<span style='color:green;'>¡Presente detectado! Registrando en Google...</span>";
+                        document.getElementById('resultado').innerHTML = "<span style='color:green;'>¡Presente detectado! Abriendo formulario...</span>";
 
-                        // 🚀 CORRECCIÓN DE RUTA DE ENVÍO DIRECTO NATIVO
-                        const form = document.createElement('form');
-                        form.method = 'POST';
-                        // Apuntamos a la dirección de envío limpia que no genera el error 405
-                        form.action = 'https://google.com';
+                        // 🚀 ENVÍO DIRECTO GET COMPATIBLE Y SEGURO
+                        // Construimos la URL prellenada oficial exacta que pasaste
+                        var urlGooglePrellenada = "https://google.com";
+                        urlPrellenada += "&entry.2133752850=" + encodeURIComponent(usuarioId);
+                        urlPrellenada += "&entry.1601257763=" + encodeURIComponent(textoQR);
 
-                        // Adjuntamos el casillero de usuario
-                        const inputUser = document.createElement('input');
-                        inputUser.type = 'hidden';
-                        inputUser.name = 'entry.2133752850';
-                        inputUser.value = usuarioId;
-                        form.appendChild(inputUser);
-
-                        // Adjuntamos el casillero de reunión
-                        const inputReunion = document.createElement('input');
-                        inputReunion.type = 'hidden';
-                        inputReunion.name = 'entry.1601257763';
-                        inputReunion.value = textoQR;
-                        form.appendChild(inputReunion);
-
-                        document.body.appendChild(form);
-                        
-                        // Enviamos oficialmente el formulario de manera nativa
-                        form.submit(); [1.35]
+                        // Redirigimos la pestaña actual directamente a Google Forms sin intermediarios
+                        window.location.href = urlGooglePrellenada;
 
                     } else {
                         document.getElementById('resultado').innerHTML = `
