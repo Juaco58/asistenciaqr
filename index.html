@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistencia QR Nativa</title>
+    
+    <!-- REGLA DE DESBLOQUEO: Permite la conexión directa con tu Supabase libremente -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; connect-src 'self' https://supabase.co;">
+
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -41,10 +45,10 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
 
-        const archivoImagen = archivos[0]; // Tu línea original intacta
+        const archivoImagen = archivos[0]; 
 
         try {
-            const bitmap = await createImageBitmap(archivoImagen); // Tu línea original intacta
+            const bitmap = await createImageBitmap(archivoImagen); 
             const detector = new BarcodeDetector({ formats: ['qr_code'] });
             const simbolosDetectados = await detector.detect(bitmap);
 
@@ -54,11 +58,9 @@
 
                 document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando con Supabase...</span>";
 
-                // Datos fijos de tu cuenta
-                const url = "https://supabase.co";
+                const url = "https://supabase.co/rest/v1/asistencias";
                 const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
 
-                // Envío directo de datos por red
                 const respuesta = await fetch(url, {
                     method: 'POST',
                     headers: {
@@ -82,7 +84,7 @@
                         </div>
                     `;
                 } else {
-                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Servidor denegó el guardado. Revisá los nombres de las columnas en Supabase.</span>";
+                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ El servidor rechazó el guardado. Revisá que las columnas en Supabase se llamen usuario_id y reunion_id en minúsculas.</span>";
                 }
 
             } else {
