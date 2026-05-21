@@ -41,7 +41,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
 
-        const archivoImagen = archivos[0]; // Mantenemos tu línea exitosa intacta
+        const archivoImagen = archivos[0];
 
         try {
             const bitmap = await createImageBitmap(archivoImagen);
@@ -52,34 +52,54 @@
                 const textoQR = simbolosDetectados[0].rawValue;
                 const usuarioId = document.getElementById('user-id').value;
 
-                document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Guardando en la base de datos...</span>";
+                document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Verificando usuario en la base de datos...</span>";
 
-                // 🚀 ENVIAR A SUPABASE USANDO FETCH NATIVO (Evita que la app se cuelgue)
-                const url = "https://supabase.co";
                 const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
+                const cabeceras = {
+                    'apikey': apiKey,
+                    'Authorization': `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json'
+                };
 
-                const respuesta = await fetch(url, {
+                // 🔍 PASO 1: VALIDAR SI EL USUARIO EXISTE EN TU TABLA 'usuarios'
+                const urlUsuarios = "https://supabase.co." + encodeURIComponent(usuarioId) + "&select=nombre";
+                const respuestaUsuario = await fetch(urlUsuarios, { method: 'GET', headers: cabeceras });
+                const datosUsuario = await respuestaUsuario.json();
+
+                // Si Supabase devuelve una lista vacía, significa que el ID no está registrado
+                if (!datosUsuario || datosUsuario.length === 0) {
+                    document.getElementById('resultado').innerHTML = `
+                        <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
+                            <b>❌ Acceso Denegado</b><br>
+                            El ID <b>${usuarioId}</b> no está registrado en la base de datos.
+                        </div>
+                    `;
+                    return; 
+                }
+
+                // Extraemos el nombre real del usuario encontrado
+                const nombreReal = datosUsuario[0].nombre;
+                document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Registrando asistencia...</span>";
+
+                // 🚀 PASO 2: GUARDAR EL PRESENTE EN TU TABLA 'asistencias'
+                const urlAsistencias = "https://supabase.co";
+                const respuestaAsistencia = await fetch(urlAsistencias, {
                     method: 'POST',
-                    headers: {
-                        'apikey': apiKey,
-                        'Authorization': `Bearer ${apiKey}`,
-                        'Content-Type': 'application/json',
-                        'Prefer': 'return=minimal'
-                    },
+                    headers: { ...cabeceras, 'Prefer': 'return=minimal' },
                     body: JSON.stringify({
                         usuario_id: usuarioId,
                         reunion_id: textoQR
                     })
                 });
 
-                if (!respuesta.ok) {
-                    throw new Error("No se pudo conectar con el servidor.");
+                if (!respuestaAsistencia.ok) {
+                    throw new Error("No se pudo asentar el presente en la base de datos.");
                 }
 
                 document.getElementById('resultado').innerHTML = `
                     <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                        <b>¡Presente Validado y Guardado!</b><br>
-                        Usuario: ${usuarioId}<br>
+                        <b>¡Presente Confirmado!</b><br>
+                        Bienvenido/a: <b>${nombreReal}</b><br>
                         Reunión: ${textoQR}
                     </div>
                 `;
@@ -90,7 +110,7 @@
                 `;
             }
         } catch (err) {
-            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error al guardar asistencia: ${err.message || err}</span>`;
+            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de comunicación: ${err.message || err}</span>`;
             console.error(err);
         }
     });
