@@ -41,9 +41,12 @@
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
+        const inputArchivo = document.getElementById('qr-file-input');
+        const inputUsuario = document.getElementById('user-id');
+
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; // Tu extracción original exitosa
+        const fotoSeleccionada = archivos[0]; 
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -56,10 +59,9 @@
 
                     if (simbolosDetectados.length > 0) {
                         const textoQR = simbolosDetectados[0].rawValue;
-                        const usuarioId = document.getElementById('user-id').value;
+                        const usuarioId = inputUsuario.value;
 
-                        // 🌟 URL REAL CORREGIDA
-                        const baseUrl = "https://ijyygmfieleqqtvvryfu.supabase.co";
+                        const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
                         
                         const cabeceras = {
@@ -71,8 +73,8 @@
 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Buscando usuario '" + usuarioId + "'...</span>";
 
-                        // Construcción de ruta REST limpia de Supabase
-                        const urlUsuarios = `${baseUrl}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
+                        // 🔍 PROCESO 1: GET USUARIOS
+                        const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
                         
                         let respuestaUsuario;
                         try {
@@ -81,7 +83,8 @@
                                 headers: cabeceras
                             });
                         } catch (errNet) {
-                            throw new Error("La base de datos de Supabase rechazó la conexión inicial. Verificá tu internet.");
+                            // 🌟 MEJORA: Te muestra el error crudo real de la red para saber qué lo bloquea
+                            throw new Error("Falla de Red Física: " + errNet.message + ". Revisá tu conexión o el estado del servidor de Supabase web.");
                         }
                         
                         if (!respuestaUsuario.ok) {
@@ -104,8 +107,8 @@
                         const nombreReal = datosUsuario[0].nombre; 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
-                        // Ruta POST corregida
-                        const urlAsistencias = `${baseUrl}/rest/v1/asistencias`;
+                        // 🚀 PROCESO 2: POST ASISTENCIAS
+                        const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
                         const respuestaAsistencia = await fetch(urlAsistencias, {
                             method: 'POST',
                             headers: { ...cabeceras, 'Prefer': 'return=minimal' },
@@ -120,11 +123,22 @@
                             throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
 
+                        // 🕒 OBTENER HORA LOCAL
+                        const ahora = new Date();
+                        const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                        // 🔒 BLOQUEO DE INPUTS
+                        inputArchivo.disabled = true;
+                        inputUsuario.disabled = true;
+                        inputArchivo.style.background = "#6c757d";
+                        inputArchivo.style.cursor = "not-allowed";
+
                         document.getElementById('resultado').innerHTML = `
                             <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
                                 <b>¡Presente Confirmado! ✅</b><br>
                                 Bienvenido/a, <b>${nombreReal}</b>.<br>
-                                <small style="color:#555;">Asistencia registrada automáticamente en la nube.</small>
+                                <span style="color:#155724; font-size: 14px;">Registrado localmente a las <b>${horaLocal}</b>.</span><br>
+                                <small style="color:#555; display:block; margin-top:5px;">Comprobante digital válido en la nube.</small>
                             </div>
                         `;
 
