@@ -13,16 +13,6 @@
 </head>
 <body>
 
-<!-- Formulario oculto nativo que enviará el presente a Google por detrás -->
-<form id="form-google-oculto" action="https://google.com" method="POST" target="iframe_fantasma" style="display:none;">
-    <input type="text" id="campo-user" name="entry.2133752850">
-    <input type="text" id="campo-reunion" name="entry.1601257763">
-    <input type="submit" id="submit-fantasma">
-</form>
-
-<!-- El receptor del formulario para que no se mueva la pantalla del celular -->
-<iframe name="iframe_fantasma" style="display:none;"></iframe>
-
 <div class="container">
     <h2>Control de Asistencia Nativo</h2>
     
@@ -34,8 +24,6 @@
     </div>
 
     <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
-    
-    <!-- Tu input original intacto -->
     <input type="file" accept="image/*" id="qr-file-input" class="input-file">
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
@@ -50,12 +38,12 @@
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR y registrando presente...</span>";
+        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Procesando y registrando presente...</span>";
 
-        const archivoImagen = archivos[0]; // Tu código exitoso original
+        const archivoImagen = archivos[0]; 
 
         try {
-            const bitmap = await createImageBitmap(archivoImagen); // Tu código exitoso original
+            const bitmap = await createImageBitmap(archivoImagen);
             const detector = new BarcodeDetector({ formats: ['qr_code'] });
             const simbolosDetectados = await detector.detect(bitmap);
 
@@ -63,20 +51,18 @@
                 const textoQR = simbolosDetectados[0].rawValue;
                 const usuarioId = document.getElementById('user-id').value;
 
-                // 🚀 TRUCO DE ENVIÓ INVISIBLE: Llenamos el formulario de Google oculto por detrás
-                document.getElementById('campo-user').value = usuarioId;
-                document.getElementById('campo-reunion').value = textoQR;
-                
-                // Forzamos el envío oficial nativo de HTML que Google procesa obligatoriamente
-                document.getElementById('submit-fantasma').click();
+                // Coordenadas fijas de tu Google Form real
+                const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
+                const CAMPO_USUARIO = "2133752850";         
+                const CAMPO_REUNION = "1601257763";         
 
-                // Cambiamos la pantalla a verde al instante sin que el usuario tenga que tocar nada más
-                document.getElementById('resultado').innerHTML = `
-                    <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                        <b>¡Presente Registrado Exitosamente! ✅</b><br>
-                        <small style="color:#333;">Ya podés guardar tu celular.</small>
-                    </div>
-                `;
+                // Armamos la URL oficial de envío que procesará Google de forma nativa e inmediata
+                const urlGoogleFinal = "https://google.com" + ID_FORMULARIO + "/formResponse?entry." + CAMPO_USUARIO + "=" + encodeURIComponent(usuarioId) + "&entry." + CAMPO_REUNION + "=" + encodeURIComponent(textoQR) + "&submit=Submit";
+
+                document.getElementById('resultado').innerHTML = "<span style='color:green;'>Presente enviado con éxito...</span>";
+
+                // Redirigimos la pestaña del celular hacia el éxito de Google de forma transparente
+                window.location.href = urlGoogleFinal;
 
             } else {
                 document.getElementById('resultado').innerHTML = `
