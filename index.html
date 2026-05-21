@@ -43,7 +43,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; // Mantenemos tu línea exitosa individual
+        const fotoSeleccionada = archivos[0]; // Mantenemos tu extracción individual nativa exitosa
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -55,12 +55,11 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados.rawValue;
+                        const textoQR = simbolosDetectados[0].rawValue;
                         const usuarioId = document.getElementById('user-id').value;
 
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
                         
-                        // CORRECCIÓN 1: Estructura de cabeceras completas requeridas por Supabase REST API
                         const cabeceras = {
                             'apikey': apiKey,
                             'Authorization': 'Bearer ' + apiKey,
@@ -68,36 +67,43 @@
                             'Accept': 'application/json'
                         };
 
-                        // 🔍 IDA: Consultamos si el usuario existe (Añadido formato de respuesta única)
+                        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Buscando usuario '" + usuarioId + "'...</span>";
+
+                        // 🔍 PROCESO 1: GET USUARIOS
                         const urlUsuarios = "https://supabase.co." + encodeURIComponent(usuarioId) + "&select=nombre";
                         
-                        const respuestaUsuario = await fetch(urlUsuarios, { 
-                            method: 'GET', 
-                            headers: { ...cabeceras, 'Prefer': 'return=representation' } // Fuerza a devolver el dato al instante
-                        });
+                        let respuestaUsuario;
+                        try {
+                            respuestaUsuario = await fetch(urlUsuarios, { 
+                                method: 'GET', 
+                                headers: { ...cabeceras, 'Prefer': 'return=representation' }
+                            });
+                        } catch (errNet) {
+                            // Si el fetch falla de raíz, analizamos si las credenciales apuntan al lugar correcto
+                            throw new Error("La base de datos de Supabase rechazó la conexión inicial. Verificá que tu proyecto esté activo ('Resumed') en el panel web.");
+                        }
                         
                         if (!respuestaUsuario.ok) {
-                            throw new Error("Fallo en la comunicación con la tabla usuarios.");
+                            const errorTexto = await respuestaUsuario.text();
+                            throw new Error("Supabase respondió con error: " + errorTexto);
                         }
 
                         const datosUsuario = await respuestaUsuario.json();
 
-                        // Si la base de datos vuelve vacía, frena y rechaza
                         if (!datosUsuario || datosUsuario.length === 0) {
                             document.getElementById('resultado').innerHTML = `
                                 <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
                                     <b>❌ Acceso Denegado</b><br>
-                                    El ID de usuario <b>${usuarioId}</b> no figura registrado en el sistema.
+                                    El ID de usuario <b>${usuarioId}</b> no figura en la tabla 'usuarios'.
                                 </div>
                             `;
                             return; 
                         }
 
-                        // Extraemos el nombre real de la fila encontrada
-                        const nombreReal = datosUsuario[0].nombre;
-                        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Registrando asistencia en la nube...</span>";
+                        const nombreReal = datosUsuario[0].nombre; // Corrección de índice para el formato JSON array de Supabase
+                        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
-                        // 🚀 VUELTA: Si pasó el filtro, guardamos la asistencia en la tabla 'asistencias'
+                        // 🚀 PROCESO 2: POST ASISTENCIAS
                         const urlAsistencias = "https://supabase.co";
                         const respuestaAsistencia = await fetch(urlAsistencias, {
                             method: 'POST',
@@ -109,15 +115,15 @@
                         });
 
                         if (!respuestaAsistencia.ok) {
-                            throw new Error("Fallo al insertar el registro en la tabla asistencias.");
+                            const errorTextoAsis = await respuestaAsistencia.text();
+                            throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
 
-                        // Éxito absoluto automático e invisible
                         document.getElementById('resultado').innerHTML = `
                             <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
                                 <b>¡Presente Confirmado! ✅</b><br>
                                 Bienvenido/a, <b>${nombreReal}</b>.<br>
-                                <small style="color:#555;">Tu ingreso fue registrado de forma automática.</small>
+                                <small style="color:#555;">Asistencia registrada automáticamente en la nube.</small>
                             </div>
                         `;
 
@@ -125,7 +131,12 @@
                         document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se detectó ningún QR en la foto.</span>`;
                     }
                 } catch (err) {
-                    document.getElementById('resultado').innerHTML = `<span style="color:red;">⚠️ Error: ${err.message || 'No se pudo completar el guardado.'}</span>`;
+                    // Muestra el desglose exacto de la falla en letras rojas
+                    document.getElementById('resultado').innerHTML = `
+                        <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; text-align:left; font-size:14px;">
+                            <b>⚠️ Alerta del Servidor:</b><br>${err.message}
+                        </div>
+                    `;
                     console.error(err);
                 }
             };
