@@ -10,6 +10,7 @@
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
         .btn-google { display: none; background: #28a745; color: white; text-decoration: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 20px; display: inline-block; box-sizing: border-box; width: 100%; }
+        #img-temporal { display: none; }
     </style>
 </head>
 <body>
@@ -33,53 +34,71 @@
     <a id="boton-confirmar" class="btn-google" target="_blank">2. CONFIRMAR PRESENTE 🚀</a>
 </div>
 
+<!-- Elemento de imagen invisible para cargar la foto de forma ultra-compatible -->
+<img id="img-temporal">
+
 <script>
     if (!('BarcodeDetector' in window)) {
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
 
-    document.getElementById('qr-file-input').addEventListener('change', async function(e) {
+    document.getElementById('qr-file-input').addEventListener('change', function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
         document.getElementById('boton-confirmar').style.display = "none";
 
-        try {
-            const bitmap = await createImageBitmap(archivos);
-            const detector = new BarcodeDetector({ formats: ['qr_code'] });
-            const simbolosDetectados = await detector.detect(bitmap);
+        const fotoSeleccionada = archivos[0]; // Extraemos explícitamente el archivo de imagen individual
+        const lectorArchivo = new FileReader();
 
-            if (simbolosDetectados.length > 0) {
-                const textoQR = simbolosDetectados.rawValue;
-                const usuarioId = document.getElementById('user-id').value;
+        lectorArchivo.onload = function(eventoUrl) {
+            const imagenInvisble = document.getElementById('img-temporal');
+            
+            imagenInvisble.onload = async function() {
+                try {
+                    // El detector analiza directamente el elemento de imagen clásico cargado, salteando bloqueos
+                    const detector = new BarcodeDetector({ formats: ['qr_code'] });
+                    const simbolosDetectados = await detector.detect(imagenInvisble);
 
-                document.getElementById('resultado').innerHTML = `
-                    <div style="background:#fff3cd; color:#856404; padding:15px; border-radius:5px; border: 1px solid #ffeeba;">
-                        <b>¡QR Detectado con éxito!</b><br>
-                        Reunión: Código Reconocido
-                    </div>
-                `;
+                    if (simbolosDetectados.length > 0) {
+                        const textoQR = simbolosDetectados[0].rawValue;
+                        const usuarioId = document.getElementById('user-id').value;
 
-                // URL prellenada simplificada uniendo cadenas de texto de forma clásica (Formato seguro)
-                var urlPrellenada = "https://google.com";
-                urlPrellenada += "&entry.2133752850=" + encodeURIComponent(usuarioId);
-                urlPrellenada += "&entry.1601257763=" + encodeURIComponent(textoQR);
+                        document.getElementById('resultado').innerHTML = `
+                            <div style="background:#fff3cd; color:#856404; padding:15px; border-radius:5px; border: 1px solid #ffeeba;">
+                                <b>¡QR Detectado con éxito!</b><br>
+                                Reunión: Código Reconocido
+                            </div>
+                        `;
 
-                const boton = document.getElementById('boton-confirmar');
-                boton.href = urlPrellenada;
-                boton.style.display = "block";
+                        // Armamos la dirección prellenada uniendo los textos de forma clásica
+                        var urlPrellenada = "https://google.com";
+                        urlPrellenada += "&entry.2133752850=" + encodeURIComponent(usuarioId);
+                        urlPrellenada += "&entry.1601257763=" + encodeURIComponent(textoQR);
 
-            } else {
-                document.getElementById('resultado').innerHTML = `
-                    <span style="color:red;">❌ No se encontró ningún QR en la foto.</span><br>
-                    <small style="color:#666;">Intentá enfocar el código más de cerca.</small>
-                `;
-            }
-        } catch (err) {
-            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de compatibilidad al abrir el archivo.</span>`;
-            console.error(err);
-        }
+                        const boton = document.getElementById('boton-confirmar');
+                        boton.href = urlPrellenada;
+                        boton.style.display = "block";
+
+                    } else {
+                        document.getElementById('resultado').innerHTML = `
+                            <span style="color:red;">❌ No se encontró ningún QR en la foto.</span><br>
+                            <small style="color:#666;">Intentá enfocar el código más de cerca y derecho.</small>
+                        `;
+                    }
+                } catch (err) {
+                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error al leer los píxeles del QR.</span>";
+                    console.error(err);
+                }
+            };
+
+            // Pasamos los datos binarios optimizados a la etiqueta de imagen
+            imagenInvisble.src = eventoUrl.target.result;
+        };
+
+        // Convertimos la foto cruda a una URL de datos locales segura para el navegador
+        lectorArchivo.readAsDataURL(fotoSeleccionada);
     });
 </script>
 
