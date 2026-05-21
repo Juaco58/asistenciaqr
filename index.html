@@ -46,7 +46,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; // ✨ CORREGIDO: Extraemos el primer archivo correctamente
+        const fotoSeleccionada = archivos[0]; 
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -61,7 +61,7 @@
                         const textoQR = simbolosDetectados[0].rawValue;
                         const usuarioId = inputUsuario.value;
 
-                        const SUPABASE_URL = "https://supabase.co";
+                        const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
                         
                         const cabeceras = {
@@ -83,7 +83,8 @@
                                 headers: cabeceras
                             });
                         } catch (errNet) {
-                            throw new Error("La base de datos de Supabase rechazó la conexión inicial. Verificá tu internet o que tu proyecto esté activo ('Resumed') en la web.");
+                            // 🌟 MEJORA: Te muestra el error crudo real de la red para saber qué lo bloquea
+                            throw new Error("Falla de Red Física: " + errNet.message + ". Revisá tu conexión o el estado del servidor de Supabase web.");
                         }
                         
                         if (!respuestaUsuario.ok) {
@@ -103,7 +104,7 @@
                             return; 
                         }
 
-                        const nombreReal = datosUsuario[0].nombre; // Formato array de Supabase REST
+                        const nombreReal = datosUsuario[0].nombre; 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
                         // 🚀 PROCESO 2: POST ASISTENCIAS
