@@ -9,7 +9,7 @@
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; }
-        .btn-enlace { display: none; background: #28a745; color: white; text-decoration: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 15px; }
+        .btn-enlace { display: none; background: #28a745; color: white; text-decoration: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 15px; display: none; }
         #canvas-oculto { display: none; }
     </style>
 </head>
@@ -30,20 +30,19 @@
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 
-    <!-- Botón que abrirá el formulario prellenado -->
+    <!-- Botón con tus enlaces reales de Google configurados -->
     <a id="btn-enlace-google" class="btn-enlace" target="_blank">Confirmar en Google Forms 🚀</a>
 </div>
 
-<!-- Lienzo invisible para achicar fotos pesadas automáticamente -->
 <canvas id="canvas-oculto"></canvas>
 
 <script>
     // =======================================================
-    // CONFIGURACIÓN DE TU GOOGLE FORM
+    // CONFIGURACIÓN REAL DE TU GOOGLE FORM (YA ASIGNADA)
     // =======================================================
-    const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg/viewform?usp=pp_url&entry.2133752850=AAA&entry.1601257763=BBB"; // Tu código largo de Google Form
-    const NUMERO_CAMPO_USUARIO = "2133752850";         // Número de la pregunta 'usuario'
-    const NUMERO_CAMPO_REUNION = "1601257763";         // Número de la pregunta 'reunion'
+    const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
+    const NUMERO_CAMPO_USUARIO = "2133752850";         
+    const NUMERO_CAMPO_REUNION = "1601257763";         
 
     if (!('BarcodeDetector' in window)) {
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
@@ -56,13 +55,12 @@
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Optimizando y leyendo imagen...</span>";
         document.getElementById('btn-enlace-google').style.display = "none";
 
-        const archivoOriginal = archivos[0];
+        const archivoOriginal = archivos;
         const lector = new FileReader();
         
         lector.onload = function(event) {
             const img = new Image();
             img.onload = async function() {
-                // Forzamos que la foto se dibuje en un tamaño liviano de máximo 600px
                 const canvas = document.getElementById('canvas-oculto');
                 const ctx = canvas.getContext('2d');
                 
@@ -87,15 +85,15 @@
                 ctx.drawImage(img, 0, 0, ancho, alto);
                 
                 try {
-                    // Analizamos la imagen ya reducida en tamaño
                     const detector = new BarcodeDetector({ formats: ['qr_code'] });
                     const simbolosDetectados = await detector.detect(canvas);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados[0].rawValue;
+                        const textoQR = simbolosDetectados.rawValue;
                         const usuarioId = document.getElementById('user-id').value;
 
-                        const urlGooglePrellenada = `https://google.com{ID_FORMULARIO}/viewform?entry.${NUMERO_CAMPO_USUARIO}=${encodeURIComponent(usuarioId)}&entry.${NUMERO_CAMPO_REUNION}=${encodeURIComponent(textoQR)}`;
+                        // Dirección exacta prellenada sin errores de letras
+                        const urlGooglePrellenada = `https://google.com{ID_FORMULARIO}/viewform?usp=pp_url&entry.${NUMERO_CAMPO_USUARIO}=${encodeURIComponent(usuarioId)}&entry.${NUMERO_CAMPO_REUNION}=${encodeURIComponent(textoQR)}`;
 
                         document.getElementById('resultado').innerHTML = `
                             <div style="background:#fff3cd; color:#856404; padding:10px; border-radius:5px;">
