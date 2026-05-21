@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistencia QR Nativa</title>
+    <!-- Cargamos el motor matemático QR oficial ultra-compatible -->
+    <script src="https://jsdelivr.net"></script>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
@@ -29,61 +31,70 @@
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
 
-<img id="img-temporal" style="display:none;">
-
 <script>
-    if (!('BarcodeDetector' in window)) {
-        alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
-    }
-
     document.getElementById('qr-file-input').addEventListener('change', function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
+        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Leyendo código QR matemáticamente...</span>";
 
-        const fotoSeleccionada = archivos; 
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
-            const imagenInvisble = document.getElementById('img-temporal');
-            
-            imagenInvisble.onload = async function() {
+            const img = new Image();
+            img.onload = function() {
+                // Creamos un lienzo intermedio para extraer la matriz de píxeles puros
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Forzamos un tamaño estándar y liviano para no saturar la memoria RAM del celu
+                const MAX_DIM = 600;
+                let ancho = img.width;
+                let alto = img.height;
+                if (ancho > alto && ancho > MAX_DIM) { alto *= MAX_DIM / ancho; ancho = MAX_DIM; }
+                else if (alto > MAX_DIM) { ancho *= MAX_DIM / alto; alto = MAX_DIM; }
+                
+                canvas.width = ancho;
+                canvas.height = alto;
+                ctx.drawImage(img, 0, 0, ancho, alto);
+                
                 try {
-                    const detector = new BarcodeDetector({ formats: ['qr_code'] });
-                    const simbolosDetectados = await detector.detect(imagenInvisble);
+                    const datosImagen = ctx.getImageData(0, 0, ancho, alto);
+                    
+                    // Escaneamos usando jsQR (No usa el sistema roto del celular)
+                    const codigoQR = jsQR(datosImagen.data, datosImagen.width, datosImagen.height, {
+                        inversionAttempts: "dontInvert"
+                    });
 
-                    if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados.rawValue;
+                    if (codigoQR && codigoQR.data) {
+                        const textoQR = codigoQR.data;
                         const usuarioId = document.getElementById('user-id').value;
 
-                        document.getElementById('resultado').innerHTML = "<span style='color:green;'>¡Presente detectado! Abriendo formulario...</span>";
+                        document.getElementById('resultado').innerHTML = "<span style='color:green;'>¡QR Detectado! Abriendo formulario...</span>";
 
-                        // 🚀 ENVÍO DIRECTO GET COMPATIBLE Y SEGURO
-                        // Construimos la URL prellenada oficial exacta que pasaste
+                        // Construimos la URL oficial prellenada exacta que nos pasaste [1.35]
                         var urlGooglePrellenada = "https://google.com";
                         urlPrellenada += "&entry.2133752850=" + encodeURIComponent(usuarioId);
                         urlPrellenada += "&entry.1601257763=" + encodeURIComponent(textoQR);
 
-                        // Redirigimos la pestaña actual directamente a Google Forms sin intermediarios
+                        // Redirigimos la pestaña del celular directo a Google Forms [1.35]
                         window.location.href = urlGooglePrellenada;
 
                     } else {
                         document.getElementById('resultado').innerHTML = `
-                            <span style="color:red;">❌ No se encontró ningún QR en la foto.</span><br>
-                            <small style="color:#666;">Intentá enfocar el código más de cerca y derecho.</small>
+                            <span style="color:red;">❌ No se detectó un código QR legible.</span><br>
+                            <small style="color:#666;">Asegurate de que la foto esté nítida y bien enfocada.</small>
                         `;
                     }
                 } catch (err) {
-                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error al leer los píxeles del QR.</span>";
+                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error interno al procesar los píxeles.</span>";
                     console.error(err);
                 }
             };
-
-            imagenInvisble.src = eventoUrl.target.result;
+            img.src = event.target.result;
         };
 
-        lectorArchivo.readAsDataURL(fotoSeleccionada);
+        lectorArchivo.readAsDataURL(archivos[0]); // Procesamos el archivo de forma correcta e individual
     });
 </script>
 
