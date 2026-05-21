@@ -10,6 +10,9 @@
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
         #img-temporal { display: none; }
+        /* Estilo para el botón de corregir ID */
+        .btn-cambiar { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; margin-left: 5px; vertical-align: middle; }
+        .btn-cambiar:hover { background: #5a6268; }
     </style>
 </head>
 <body>
@@ -21,7 +24,10 @@
 
     <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
         <label><b>Tu ID de Usuario asignado:</b></label>
-        <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
+        <div style="display: flex; margin-top: 5px;">
+            <input type="text" id="user-id" style="width: 75%; padding: 8px; box-sizing: border-box;" placeholder="Ej: USR-001">
+            <button type="button" id="btn-editar-id" class="btn-cambiar">Cambiar</button>
+        </div>
     </div>
 
     <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
@@ -37,16 +43,61 @@
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
 
+    const inputUsuario = document.getElementById('user-id');
+    const botonEditar = document.getElementById('btn-editar-id');
+    
+    // 🌟 CONTROL DE MEMORIA: Verificamos si ya hay un ID guardado en el teléfono
+    const idGuardado = localStorage.getItem('asistencia_user_id');
+    if (idGuardado) {
+        inputUsuario.value = idGuardado;
+        inputUsuario.disabled = true;
+        inputUsuario.style.background = "#e9ecef";
+        botonEditar.textContent = "Cambiar";
+    } else {
+        botonEditar.style.display = "none"; 
+    }
+
+    // 🌟 ACCIÓN DE CAMBIAR: Si se equivocó de ID, borra la memoria y permite editar
+    botonEditar.addEventListener('click', function() {
+        localStorage.removeItem('asistencia_user_id'); 
+        inputUsuario.value = "";
+        inputUsuario.disabled = false;
+        inputUsuario.style.background = "white";
+        botonEditar.style.display = "none"; 
+        
+        const inputArchivo = document.getElementById('qr-file-input');
+        inputArchivo.disabled = false;
+        inputArchivo.style.background = "#007bff";
+        inputArchivo.style.cursor = "pointer";
+        document.getElementById('resultado').innerHTML = "";
+    });
+
+    // Muestra el botón para limpiar mientras escribe manualmente por primera vez
+    inputUsuario.addEventListener('input', function() {
+        if (inputUsuario.value.trim().length > 0) {
+            botonEditar.textContent = "Limpiar";
+            botonEditar.style.display = "inline-block";
+        } else {
+            botonEditar.style.display = "none";
+        }
+    });
+
     document.getElementById('qr-file-input').addEventListener('change', function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
         const inputArchivo = document.getElementById('qr-file-input');
-        const inputUsuario = document.getElementById('user-id');
+        const usuarioId = inputUsuario.value.trim();
+
+        if (!usuarioId) {
+            document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ Por favor, ingresá tu ID de usuario antes de escanear.</span>`;
+            inputArchivo.value = "";
+            return;
+        }
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; 
+        const fotoSeleccionada = archivos; // Extracción original que sí lee el QR
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -58,10 +109,9 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados[0].rawValue;
-                        const usuarioId = inputUsuario.value;
+                        const textoQR = simbolosDetectados.rawValue;
 
-                        const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
+                        const baseUrl = "https://supabase.co";
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
                         
                         const cabeceras = {
@@ -73,19 +123,12 @@
 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Buscando usuario '" + usuarioId + "'...</span>";
 
-                        // 🔍 PROCESO 1: GET USUARIOS
-                        const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
+                        const urlUsuarios = baseUrl + "/rest/v1/usuarios?id=eq." + encodeURIComponent(usuarioId) + "&select=nombre";
                         
-                        let respuestaUsuario;
-                        try {
-                            respuestaUsuario = await fetch(urlUsuarios, { 
-                                method: 'GET', 
-                                headers: cabeceras
-                            });
-                        } catch (errNet) {
-                            // 🌟 MEJORA: Te muestra el error crudo real de la red para saber qué lo bloquea
-                            throw new Error("Falla de Red Física: " + errNet.message + ". Revisá tu conexión o el estado del servidor de Supabase web.");
-                        }
+                        let respuestaUsuario = await fetch(urlUsuarios, { 
+                            method: 'GET', 
+                            headers: cabeceras
+                        });
                         
                         if (!respuestaUsuario.ok) {
                             const errorTexto = await respuestaUsuario.text();
@@ -94,6 +137,7 @@
 
                         const datosUsuario = await respuestaUsuario.json();
 
+                        // 🌟 PROTECCIÓN: Si el ID no existe en Supabase, frena acá y NO guarda nada en memoria
                         if (!datosUsuario || datosUsuario.length === 0) {
                             document.getElementById('resultado').innerHTML = `
                                 <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
@@ -104,11 +148,10 @@
                             return; 
                         }
 
-                        const nombreReal = datosUsuario[0].nombre; 
+                        const nombreReal = datosUsuario.nombre; 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
-                        // 🚀 PROCESO 2: POST ASISTENCIAS
-                        const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
+                        const urlAsistencias = baseUrl + "/rest/v1/asistencias";
                         const respuestaAsistencia = await fetch(urlAsistencias, {
                             method: 'POST',
                             headers: { ...cabeceras, 'Prefer': 'return=minimal' },
@@ -123,15 +166,20 @@
                             throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
 
-                        // 🕒 OBTENER HORA LOCAL
+                        // 🌟 ÉXITO REAL: Solo si Supabase aceptó todo, el ID correcto se guarda de forma permanente
+                        localStorage.setItem('asistencia_user_id', usuarioId);
+
+                        // Formato de hora local limpio
                         const ahora = new Date();
                         const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                        // 🔒 BLOQUEO DE INPUTS
+                        // Bloqueo estricto post-registro
                         inputArchivo.disabled = true;
                         inputUsuario.disabled = true;
                         inputArchivo.style.background = "#6c757d";
                         inputArchivo.style.cursor = "not-allowed";
+                        botonEditar.textContent = "Salir";
+                        botonEditar.style.display = "inline-block";
 
                         document.getElementById('resultado').innerHTML = `
                             <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
@@ -151,7 +199,6 @@
                             <b>⚠️ Alerta del Servidor:</b><br>${err.message}
                         </div>
                     `;
-                    console.error(err);
                 }
             };
             imagenInvisble.src = eventoUrl.target.result;
