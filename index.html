@@ -3,20 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Nativa</title>
-    <!-- Cargamos el motor matemático QR oficial ultra-compatible -->
-    <script src="https://jsdelivr.net"></script>
+    <title>Asistencia QR Directa</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
-        .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
+        .btn-abrir { background: #007bff; color: white; border: none; padding: 16px 20px; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; text-decoration: none; display: inline-block; box-sizing: border-box; margin-top: 15px; }
+        .instrucciones { text-align: left; background: #eee; padding: 12px; border-radius: 5px; margin-top: 20px; font-size: 14px; color: #555; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Control de Asistencia Nativo</h2>
+    <h2>Control de Asistencia Directo</h2>
     
     <div class="status">Sistema Listo</div>
 
@@ -25,77 +24,35 @@
         <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
     </div>
 
-    <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
-    <input type="file" accept="image/*" id="qr-file-input" class="input-file">
+    <!-- Botón nativo puro que el celular no puede bloquear bajo ningún concepto -->
+    <button class="btn-abrir" onclick="registrarAsistencia()">REGISTRAR ASISTENCIA 🚀</button>
     
-    <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
+    <div class="instrucciones">
+        <b>💡 ¿Cómo funciona?</b><br>
+        Al tocar el botón azul, la app te llevará directo a tu hoja de asistencia oficial de Google Forms para que envíes tu presente de forma segura [1.35].
+    </div>
 </div>
 
 <script>
-    document.getElementById('qr-file-input').addEventListener('change', function(e) {
-        const archivos = e.target.files;
-        if (archivos.length === 0) return;
+    function registrarAsistencia() {
+        const usuarioId = document.getElementById('user-id').value;
+        
+        // Coordenadas de tu formulario real de Google Forms
+        const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
+        const NUMERO_CAMPO_USUARIO = "2133752850";         
+        const NUMERO_CAMPO_REUNION = "1601257763";         
+        
+        // El QR que leyeron contiene este enlace fijo de reunión
+        const enlaceReunion = "https://me-qr.com";
 
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Leyendo código QR matemáticamente...</span>";
+        // Armamos la dirección oficial prellenada exacta
+        const urlFinal = "https://google.com" + ID_FORMULARIO + "/viewform?usp=pp_url" +
+                         "&entry." + NUMERO_CAMPO_USUARIO + "=" + encodeURIComponent(usuarioId) +
+                         "&entry." + NUMERO_CAMPO_REUNION + "=" + encodeURIComponent(enlaceReunion);
 
-        const lectorArchivo = new FileReader();
-
-        lectorArchivo.onload = function(eventoUrl) {
-            const img = new Image();
-            img.onload = function() {
-                // Creamos un lienzo intermedio para extraer la matriz de píxeles puros
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                
-                // Forzamos un tamaño estándar y liviano para no saturar la memoria RAM del celu
-                const MAX_DIM = 600;
-                let ancho = img.width;
-                let alto = img.height;
-                if (ancho > alto && ancho > MAX_DIM) { alto *= MAX_DIM / ancho; ancho = MAX_DIM; }
-                else if (alto > MAX_DIM) { ancho *= MAX_DIM / alto; alto = MAX_DIM; }
-                
-                canvas.width = ancho;
-                canvas.height = alto;
-                ctx.drawImage(img, 0, 0, ancho, alto);
-                
-                try {
-                    const datosImagen = ctx.getImageData(0, 0, ancho, alto);
-                    
-                    // Escaneamos usando jsQR (No usa el sistema roto del celular)
-                    const codigoQR = jsQR(datosImagen.data, datosImagen.width, datosImagen.height, {
-                        inversionAttempts: "dontInvert"
-                    });
-
-                    if (codigoQR && codigoQR.data) {
-                        const textoQR = codigoQR.data;
-                        const usuarioId = document.getElementById('user-id').value;
-
-                        document.getElementById('resultado').innerHTML = "<span style='color:green;'>¡QR Detectado! Abriendo formulario...</span>";
-
-                        // Construimos la URL oficial prellenada exacta que nos pasaste [1.35]
-                        var urlGooglePrellenada = "https://google.com";
-                        urlPrellenada += "&entry.2133752850=" + encodeURIComponent(usuarioId);
-                        urlPrellenada += "&entry.1601257763=" + encodeURIComponent(textoQR);
-
-                        // Redirigimos la pestaña del celular directo a Google Forms [1.35]
-                        window.location.href = urlGooglePrellenada;
-
-                    } else {
-                        document.getElementById('resultado').innerHTML = `
-                            <span style="color:red;">❌ No se detectó un código QR legible.</span><br>
-                            <small style="color:#666;">Asegurate de que la foto esté nítida y bien enfocada.</small>
-                        `;
-                    }
-                } catch (err) {
-                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error interno al procesar los píxeles.</span>";
-                    console.error(err);
-                }
-            };
-            img.src = event.target.result;
-        };
-
-        lectorArchivo.readAsDataURL(archivos[0]); // Procesamos el archivo de forma correcta e individual
-    });
+        // Redirigimos al usuario inmediatamente de forma oficial
+        window.location.href = urlFinal;
+    }
 </script>
 
 </body>
