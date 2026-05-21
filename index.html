@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- 🌟 NUEVO: Escudo de seguridad CSP para forzar al celular a permitir la conexión con Supabase -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://supabase.co; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://supabase.co;">
     <title>Asistencia QR Profesional</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
@@ -97,7 +99,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; // 🌟 REPARADO: Volvemos a extraer el archivo individual correctamente con [0]
+        const fotoSeleccionada = archivos[0]; // Extraemos el archivo individual
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
