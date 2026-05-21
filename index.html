@@ -10,7 +10,7 @@
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
         #img-temporal { display: none; }
-        /* Estilo para el botón de corregir ID */
+        /* 🌟 Estilo para el nuevo botón Cambiar ID */
         .btn-cambiar { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; margin-left: 5px; vertical-align: middle; }
         .btn-cambiar:hover { background: #5a6268; }
     </style>
@@ -24,8 +24,9 @@
 
     <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
         <label><b>Tu ID de Usuario asignado:</b></label>
+        <!-- 🌟 Cambiado: Ajuste en la estructura para que el botón entre al lado prolijamente -->
         <div style="display: flex; margin-top: 5px;">
-            <input type="text" id="user-id" style="width: 75%; padding: 8px; box-sizing: border-box;" placeholder="Ej: USR-001">
+            <input type="text" id="user-id" value="USR-001" style="width: 75%; padding: 8px; box-sizing: border-box;">
             <button type="button" id="btn-editar-id" class="btn-cambiar">Cambiar</button>
         </div>
     </div>
@@ -45,8 +46,8 @@
 
     const inputUsuario = document.getElementById('user-id');
     const botonEditar = document.getElementById('btn-editar-id');
-    
-    // 🌟 CONTROL DE MEMORIA: Verificamos si ya hay un ID guardado en el teléfono
+
+    // 🌟 1. AUTO-CARGA DE MEMORIA: Si ya hay un ID guardado de antes, lo bloquea y lo muestra
     const idGuardado = localStorage.getItem('asistencia_user_id');
     if (idGuardado) {
         inputUsuario.value = idGuardado;
@@ -54,10 +55,10 @@
         inputUsuario.style.background = "#e9ecef";
         botonEditar.textContent = "Cambiar";
     } else {
-        botonEditar.style.display = "none"; 
+        botonEditar.style.display = "none"; // Se oculta temporalmente si la app empieza de cero
     }
 
-    // 🌟 ACCIÓN DE CAMBIAR: Si se equivocó de ID, borra la memoria y permite editar
+    // 🌟 2. ACCIÓN DEL BOTÓN CAMBIAR: Si se equivocó de ID, borra memoria, limpia y deja editar
     botonEditar.addEventListener('click', function() {
         localStorage.removeItem('asistencia_user_id'); 
         inputUsuario.value = "";
@@ -72,7 +73,7 @@
         document.getElementById('resultado').innerHTML = "";
     });
 
-    // Muestra el botón para limpiar mientras escribe manualmente por primera vez
+    // Muestra el botón para limpiar si el usuario tipea a mano un ID por primera vez
     inputUsuario.addEventListener('input', function() {
         if (inputUsuario.value.trim().length > 0) {
             botonEditar.textContent = "Limpiar";
@@ -87,9 +88,8 @@
         if (archivos.length === 0) return;
 
         const inputArchivo = document.getElementById('qr-file-input');
-        const usuarioId = inputUsuario.value.trim();
 
-        if (!usuarioId) {
+        if (!inputUsuario.value.trim()) {
             document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ Por favor, ingresá tu ID de usuario antes de escanear.</span>`;
             inputArchivo.value = "";
             return;
@@ -97,7 +97,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos; // Extracción original que sí lee el QR
+        const fotoSeleccionada = archivos[0]; // 🌟 Mantenemos tu extracción individual nativa exacta
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -109,9 +109,10 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados.rawValue;
+                        const textoQR = simbolosDetectados[0].rawValue; // 🌟 Tu decodificación original intacta
+                        const usuarioId = inputUsuario.value;
 
-                        const baseUrl = "https://supabase.co";
+                        const SUPABASE_URL = "https://supabase.co";
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
                         
                         const cabeceras = {
@@ -123,21 +124,27 @@
 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Buscando usuario '" + usuarioId + "'...</span>";
 
-                        const urlUsuarios = baseUrl + "/rest/v1/usuarios?id=eq." + encodeURIComponent(usuarioId) + "&select=nombre";
+                        // 🔍 PROCESO 1: GET USUARIOS
+                        const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
                         
-                        let respuestaUsuario = await fetch(urlUsuarios, { 
-                            method: 'GET', 
-                            headers: cabeceras
-                        });
+                        let respuestaUsuario;
+                        try {
+                            respuestaUsuario = await fetch(urlUsuarios, { 
+                                method: 'GET', 
+                                headers: cabeceras
+                            });
+                        } catch (errNet) {
+                            throw new Error("Falla de Red Física: " + errNet.message + ". Revisá tu conexión o el estado del servidor de Supabase web.");
+                        }
                         
                         if (!respuestaUsuario.ok) {
                             const errorTexto = await respuestaUsuario.text();
-                            throw new Error("Supabase respondió con error: " + errorTexto);
+                            throw new Error("Supabase responded con error: " + errorTexto);
                         }
 
                         const datosUsuario = await respuestaUsuario.json();
 
-                        // 🌟 PROTECCIÓN: Si el ID no existe en Supabase, frena acá y NO guarda nada en memoria
+                        // 🌟 ESCUDO PROTECTOR: Si el ID no figura en Supabase, frena acá y NO guarda nada erróneo en la memoria del celu
                         if (!datosUsuario || datosUsuario.length === 0) {
                             document.getElementById('resultado').innerHTML = `
                                 <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
@@ -148,10 +155,11 @@
                             return; 
                         }
 
-                        const nombreReal = datosUsuario.nombre; 
+                        const nombreReal = datosUsuario[0].nombre; // Tu extracción de nombre exacta
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
-                        const urlAsistencias = baseUrl + "/rest/v1/asistencias";
+                        // 🚀 PROCESO 2: POST ASISTENCIAS
+                        const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
                         const respuestaAsistencia = await fetch(urlAsistencias, {
                             method: 'POST',
                             headers: { ...cabeceras, 'Prefer': 'return=minimal' },
@@ -166,18 +174,20 @@
                             throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
 
-                        // 🌟 ÉXITO REAL: Solo si Supabase aceptó todo, el ID correcto se guarda de forma permanente
+                        // 🌟 ÉXITO CONFIRMADO: Guardamos el ID validado de forma permanente en el almacenamiento local del teléfono
                         localStorage.setItem('asistencia_user_id', usuarioId);
 
-                        // Formato de hora local limpio
+                        // 🕒 OBTENER HORA LOCAL LIMPIA
                         const ahora = new Date();
                         const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                        // Bloqueo estricto post-registro
+                        // 🔒 BLOQUEO DE CONTROLES POST-REGISTRO
                         inputArchivo.disabled = true;
                         inputUsuario.disabled = true;
                         inputArchivo.style.background = "#6c757d";
                         inputArchivo.style.cursor = "not-allowed";
+                        
+                        // Transformamos el botón para que sirva para cerrar sesión o cambiar de cuenta
                         botonEditar.textContent = "Salir";
                         botonEditar.style.display = "inline-block";
 
@@ -199,6 +209,7 @@
                             <b>⚠️ Alerta del Servidor:</b><br>${err.message}
                         </div>
                     `;
+                    console.error(err);
                 }
             };
             imagenInvisble.src = eventoUrl.target.result;
