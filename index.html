@@ -33,7 +33,6 @@
 <img id="img-temporal">
 
 <script>
-    <script>
     if (!('BarcodeDetector' in window)) {
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
@@ -42,13 +41,12 @@
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
-        // Guardamos referencias a los inputs para poder manipularlos
         const inputArchivo = document.getElementById('qr-file-input');
         const inputUsuario = document.getElementById('user-id');
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; 
+        const fotoSeleccionada = archivos[0]; // 🌟 Corregido: Volvemos a extraer el archivo individual correctamente
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -60,7 +58,7 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados[0].rawValue;
+                        const textoQR = simbolosDetectados[0].rawValue; // 🌟 Corregido: Volvemos al índice original nativo
                         const usuarioId = inputUsuario.value;
 
                         const SUPABASE_URL = "https://supabase.co";
@@ -124,11 +122,11 @@
                             throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
 
-                        // 🕒 MEJORA 2: Calcular la hora local del celular en formato legible (HH:MM)
+                        // 🕒 OBTENER HORA LOCAL
                         const ahora = new Date();
                         const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + " hs";
 
-                        // 🔒 MEJORA 1: Bloquear campos y cambiar estilo visual del botón para denotar éxito
+                        // 🔒 BLOQUEO DE INPUTS
                         inputArchivo.disabled = true;
                         inputUsuario.disabled = true;
                         inputArchivo.style.background = "#6c757d";
@@ -160,7 +158,6 @@
         lectorArchivo.readAsDataURL(fotoSeleccionada);
     });
 </script>
-
 
 </body>
 </html>
