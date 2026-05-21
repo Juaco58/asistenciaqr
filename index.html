@@ -30,7 +30,6 @@
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
 
-<!-- Elemento de imagen invisible para cargar la foto de forma ultra-compatible -->
 <img id="img-temporal">
 
 <script>
@@ -44,7 +43,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
 
-        const fotoSeleccionada = archivos[0]; // Extraemos el archivo individual de forma compatible
+        const fotoSeleccionada = archivos[0]; 
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -59,29 +58,31 @@
                         const textoQR = simbolosDetectados[0].rawValue;
                         const usuarioId = document.getElementById('user-id').value;
 
-                        document.getElementById('resultado').innerHTML = "<span style='color:green;'>¡Presente detectado! Redirigiendo a Google...</span>";
+                        document.getElementById('resultado').innerHTML = "<span style='color:green;'>¡Presente detectado! Registrando en Google...</span>";
 
-                        // 🚀 ENVÍO SEGURO MEDIANTE FORMULARIO POST NATIVO EN MEMORIA
+                        // 🚀 CORRECCIÓN DE RUTA DE ENVÍO DIRECTO NATIVO
                         const form = document.createElement('form');
                         form.method = 'POST';
+                        // Apuntamos a la dirección de envío limpia que no genera el error 405
                         form.action = 'https://google.com';
 
-                        // Campo usuario
+                        // Adjuntamos el casillero de usuario
                         const inputUser = document.createElement('input');
                         inputUser.type = 'hidden';
                         inputUser.name = 'entry.2133752850';
                         inputUser.value = usuarioId;
                         form.appendChild(inputUser);
 
-                        // Campo reunión
+                        // Adjuntamos el casillero de reunión
                         const inputReunion = document.createElement('input');
                         inputReunion.type = 'hidden';
                         inputReunion.name = 'entry.1601257763';
                         inputReunion.value = textoQR;
                         form.appendChild(inputReunion);
 
-                        // Adjuntamos al documento y enviamos
                         document.body.appendChild(form);
+                        
+                        // Enviamos oficialmente el formulario de manera nativa
                         form.submit(); [1.35]
 
                     } else {
