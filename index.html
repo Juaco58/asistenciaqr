@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Directa</title>
+    <title>Asistencia QR Nativa</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; margin-bottom: 20px; }
-        .btn-abrir { background: #007bff; color: white; border: none; padding: 16px 20px; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; }
-        input[type="text"] { width: 95%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; box-sizing: border-box; }
+        .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; margin-bottom: 25px; }
+        .btn-abrir { background: #007bff; color: white; border: none; padding: 16px 20px; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; text-decoration: none; display: inline-block; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -19,23 +18,13 @@
     
     <div class="status">Sistema Listo</div>
 
-    <!-- Formulario HTML Puro: El navegador se encarga de todo el envío sin intervención de JS -->
-    <form action="https://google.com" method="GET">
-        
-        <!-- Parámetro obligatorio para que Google acepte datos prellenados -->
-        <input type="hidden" name="usp" value="pp_url">
+    <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
+        <p><b>Tu ID de Usuario asignado:</b> USR-001</p>
+        <p><b>Código de Reunión:</b> Guardado automáticamente</p>
+    </div>
 
-        <div style="text-align: left;">
-            <label><b>Tu ID de Usuario asignado:</b></label>
-            <input type="text" name="entry.2133752850" value="USR-001" required>
-        </div>
-
-        <!-- El link de tu reunión ya queda fijo e inyectado de forma nativa -->
-        <input type="hidden" name="entry.1601257763" value="https://me-qr.com">
-
-        <!-- Botón de envío estándar que el celular jamás puede bloquear -->
-        <button type="submit" class="btn-abrir">REGISTRAR ASISTENCIA 🚀</button>
-    </form>
+    <!-- Enlace corto directo oficial que el celular no puede rebotar -->
+    <a href="https://forms.gle" class="btn-abrir" target="_blank">REGISTRAR ASISTENCIA 🚀</a>
 </div>
 
 </body>
