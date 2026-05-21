@@ -9,6 +9,7 @@
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
+        #img-temporal { display: none; }
     </style>
 </head>
 <body>
@@ -29,66 +30,76 @@
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
 
+<!-- Elemento de imagen invisible para cargar la foto de forma ultra-compatible -->
+<img id="img-temporal">
+
 <script>
     if (!('BarcodeDetector' in window)) {
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
 
-    document.getElementById('qr-file-input').addEventListener('change', async function(e) {
+    document.getElementById('qr-file-input').addEventListener('change', function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Procesando y registrando presente...</span>";
+        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
 
-        const archivoImagen = archivos; 
+        const fotoSeleccionada = archivos[0]; // Extraemos el archivo individual de forma compatible
+        const lectorArchivo = new FileReader();
 
-        try {
-            const bitmap = await createImageBitmap(archivoImagen);
-            const detector = new BarcodeDetector({ formats: ['qr_code'] });
-            const simbolosDetectados = await detector.detect(bitmap);
+        lectorArchivo.onload = function(eventoUrl) {
+            const imagenInvisble = document.getElementById('img-temporal');
+            
+            imagenInvisble.onload = async function() {
+                try {
+                    const detector = new BarcodeDetector({ formats: ['qr_code'] });
+                    const simbolosDetectados = await detector.detect(imagenInvisble);
 
-            if (simbolosDetectados.length > 0) {
-                const textoQR = simbolosDetectados.rawValue;
-                const usuarioId = document.getElementById('user-id').value;
+                    if (simbolosDetectados.length > 0) {
+                        const textoQR = simbolosDetectados[0].rawValue;
+                        const usuarioId = document.getElementById('user-id').value;
 
-                // 🚀 SISTEMA DE ENVÍO INDESTRUCTIBLE POST NATIVO
-                // Creamos un formulario real dinámico en memoria (salta el bloqueo de URL)
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = 'https://google.com';
+                        document.getElementById('resultado').innerHTML = "<span style='color:green;'>¡Presente detectado! Redirigiendo a Google...</span>";
 
-                // Añadimos el casillero de usuario
-                const inputUser = document.createElement('input');
-                inputUser.type = 'hidden';
-                inputUser.name = 'entry.2133752850';
-                inputUser.value = usuarioId;
-                form.appendChild(inputUser);
+                        // 🚀 ENVÍO SEGURO MEDIANTE FORMULARIO POST NATIVO EN MEMORIA
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = 'https://google.com';
 
-                // Añadimos el casillero de reunión
-                const inputReunion = document.createElement('input');
-                inputReunion.type = 'hidden';
-                inputReunion.name = 'entry.1601257763';
-                inputReunion.value = textoQR;
-                form.appendChild(inputReunion);
+                        // Campo usuario
+                        const inputUser = document.createElement('input');
+                        inputUser.type = 'hidden';
+                        inputUser.name = 'entry.2133752850';
+                        inputUser.value = usuarioId;
+                        form.appendChild(inputUser);
 
-                // Enganchamos el formulario a la página y lo enviamos oficialmente
-                document.body.appendChild(form);
-                
-                document.getElementById('resultado').innerHTML = "<span style='color:green;'>¡Redirigiendo a confirmación de Google!</span>";
-                
-                // Ejecuta la acción oficial de envío que Google acepta de forma obligatoria
-                form.submit(); [1.35]
+                        // Campo reunión
+                        const inputReunion = document.createElement('input');
+                        inputReunion.type = 'hidden';
+                        inputReunion.name = 'entry.1601257763';
+                        inputReunion.value = textoQR;
+                        form.appendChild(inputReunion);
 
-            } else {
-                document.getElementById('resultado').innerHTML = `
-                    <span style="color:red;">❌ No se encontró ningún QR en la foto.</span><br>
-                    <small style="color:#666;">Intentá enfocar el código más de cerca.</small>
-                `;
-            }
-        } catch (err) {
-            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de compatibilidad al abrir el archivo.</span>`;
-            console.error(err);
-        }
+                        // Adjuntamos al documento y enviamos
+                        document.body.appendChild(form);
+                        form.submit(); [1.35]
+
+                    } else {
+                        document.getElementById('resultado').innerHTML = `
+                            <span style="color:red;">❌ No se encontró ningún QR en la foto.</span><br>
+                            <small style="color:#666;">Intentá enfocar el código más de cerca y derecho.</small>
+                        `;
+                    }
+                } catch (err) {
+                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error al leer los píxeles del QR.</span>";
+                    console.error(err);
+                }
+            };
+
+            imagenInvisble.src = eventoUrl.target.result;
+        };
+
+        lectorArchivo.readAsDataURL(fotoSeleccionada);
     });
 </script>
 
