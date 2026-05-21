@@ -25,14 +25,12 @@
 
     <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
     
-    <!-- Input nativo puro para activar la cámara del celular -->
     <input type="file" accept="image/*" id="qr-file-input" class="input-file">
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
 
 <script>
-    // Comprobamos si el navegador soporta el motor nativo de QR
     if (!('BarcodeDetector' in window)) {
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
@@ -43,26 +41,44 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
 
-        const archivoImagen = archivos[0];
+        const archivoImagen = archivos[0]; // Mantenemos tu línea exitosa intacta
 
         try {
-            // Creamos un objeto de imagen nativo de alta velocidad (ImageBitmap)
-            // Esto evita los bloqueos de seguridad de disco local (CORS)
             const bitmap = await createImageBitmap(archivoImagen);
-
-            // Inicializamos el detector nativo del sistema operativo (Android/iOS/Windows)
             const detector = new BarcodeDetector({ formats: ['qr_code'] });
-            
-            // Analizamos los píxeles directamente del objeto bitmap
             const simbolosDetectados = await detector.detect(bitmap);
 
             if (simbolosDetectados.length > 0) {
                 const textoQR = simbolosDetectados[0].rawValue;
                 const usuarioId = document.getElementById('user-id').value;
 
+                document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Guardando en la base de datos...</span>";
+
+                // 🚀 ENVIAR A SUPABASE USANDO FETCH NATIVO (Evita que la app se cuelgue)
+                const url = "https://supabase.co";
+                const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
+
+                const respuesta = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'apikey': apiKey,
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Content-Type': 'application/json',
+                        'Prefer': 'return=minimal'
+                    },
+                    body: JSON.stringify({
+                        usuario_id: usuarioId,
+                        reunion_id: textoQR
+                    })
+                });
+
+                if (!respuesta.ok) {
+                    throw new Error("No se pudo conectar con el servidor.");
+                }
+
                 document.getElementById('resultado').innerHTML = `
                     <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                        <b>¡Presente Validado!</b><br>
+                        <b>¡Presente Validado y Guardado!</b><br>
                         Usuario: ${usuarioId}<br>
                         Reunión: ${textoQR}
                     </div>
@@ -74,7 +90,7 @@
                 `;
             }
         } catch (err) {
-            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error de compatibilidad al abrir el archivo.</span>`;
+            document.getElementById('resultado').innerHTML = `<span style="color:red;">Error al guardar asistencia: ${err.message || err}</span>`;
             console.error(err);
         }
     });
