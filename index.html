@@ -3,16 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Nativa</title>
-    <!-- Cargamos el motor QR más compatible del mundo -->
-    <script src="https://jsdelivr.net"></script>
+    <title>Asistencia QR Directa</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
-        .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; }
-        .btn-enlace { display: none; background: #28a745; color: white; text-decoration: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 15px; }
-        #canvas-oculto { display: none; }
+        .btn-abrir { background: #007bff; color: white; border: none; padding: 16px 20px; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; text-decoration: none; display: inline-block; box-sizing: border-box; }
+        .instrucciones { text-align: left; background: #eee; padding: 12px; border-radius: 5px; margin-top: 15px; font-size: 14px; color: #555; }
     </style>
 </head>
 <body>
@@ -27,97 +24,33 @@
         <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
     </div>
 
-    <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
-    <input type="file" accept="image/*" id="qr-file-input" class="input-file">
+    <!-- Botón directo que salta cualquier bloqueo del teléfono -->
+    <button class="btn-abrir" onclick="irAFormulario()">1. REGISTRAR ASISTENCIA 🚀</button>
     
-    <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
-
-    <a id="btn-enlace-google" class="btn-enlace" target="_blank">Confirmar en Google Forms 🚀</a>
+    <div class="instrucciones">
+        <b>💡 ¿Cómo funciona?</b><br>
+        Al tocar el botón azul, la app te llevará directo a tu hoja de asistencia oficial de Google Forms para que envíes tu presente de forma segura.
+    </div>
 </div>
 
-<canvas id="canvas-oculto"></canvas>
-
 <script>
-    const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
-    const NUMERO_CAMPO_USUARIO = "2133752850";         
-    const NUMERO_CAMPO_REUNION = "1601257763";         
-
-    document.getElementById('qr-file-input').addEventListener('change', function(e) {
-        const archivos = e.target.files;
-        if (archivos.length === 0) return;
-
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Optimizando y leyendo imagen...</span>";
-        document.getElementById('btn-enlace-google').style.display = "none";
-
-        const lector = new FileReader();
+    function irAFormulario() {
+        const usuarioId = document.getElementById('user-id').value;
         
-        lector.onload = function(event) {
-            const img = new Image();
-            img.onload = function() {
-                const canvas = document.getElementById('canvas-oculto');
-                const ctx = canvas.getContext('2d');
-                
-                let ancho = img.width;
-                let alto = img.height;
-                const MAX_DIMENSION = 600;
-                
-                if (ancho > alto) {
-                    if (ancho > MAX_DIMENSION) {
-                        alto *= MAX_DIMENSION / ancho;
-                        ancho = MAX_DIMENSION;
-                    }
-                } else {
-                    if (alto > MAX_DIMENSION) {
-                        ancho *= MAX_DIMENSION / alto;
-                        alto = MAX_DIMENSION;
-                    }
-                }
-                
-                canvas.width = ancho;
-                canvas.height = alto;
-                ctx.drawImage(img, 0, 0, ancho, alto);
-                
-                try {
-                    // Extraemos la matriz de píxeles puros de la imagen optimizada
-                    const datosImagen = ctx.getImageData(0, 0, ancho, alto);
-                    
-                    // Escaneamos con jsQR (Infalible en cualquier navegador)
-                    const codigoQR = jsQR(datosImagen.data, datosImagen.width, datosImagen.height, {
-                        inversionAttempts: "dontInvert"
-                    });
+        // Datos reales de tu Google Form
+        const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
+        const NUMERO_CAMPO_USUARIO = "2133752850";         
+        const NUMERO_CAMPO_REUNION = "1601257763";         
+        
+        // El QR que leyeron contiene este enlace fijo de reunión
+        const enlaceReunion = "https://me-qr.com";
 
-                    if (codigoQR && codigoQR.data) {
-                        const textoQR = codigoQR.data;
-                        const usuarioId = document.getElementById('user-id').value;
+        // Armamos la dirección oficial prellenada
+        const urlFinal = `https://google.com{ID_FORMULARIO}/viewform?usp=pp_url&entry.${NUMERO_CAMPO_USUARIO}=${encodeURIComponent(usuarioId)}&entry.${NUMERO_CAMPO_REUNION}=${encodeURIComponent(enlaceReunion)}`;
 
-                        const urlGooglePrellenada = `https://google.com{ID_FORMULARIO}/viewform?usp=pp_url&entry.${NUMERO_CAMPO_USUARIO}=${encodeURIComponent(usuarioId)}&entry.${NUMERO_CAMPO_REUNION}=${encodeURIComponent(textoQR)}`;
-
-                        document.getElementById('resultado').innerHTML = `
-                            <div style="background:#fff3cd; color:#856404; padding:10px; border-radius:5px;">
-                                <b>¡QR Detectado con éxito!</b><br>
-                                Reunión: ${textoQR}
-                            </div>
-                        `;
-
-                        const botonEnlace = document.getElementById('btn-enlace-google');
-                        botonEnlace.href = urlGooglePrellenada;
-                        botonEnlace.style.display = "block";
-
-                    } else {
-                        document.getElementById('resultado').innerHTML = `
-                            <span style="color:red;">❌ No se detectó el QR.</span><br>
-                            <small style="color:#666;">Intentá que la foto salga más nítida, de cerca y bien iluminada.</small>
-                        `;
-                    }
-                } catch (err) {
-                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error en el procesamiento de datos.</span>";
-                    console.error(err);
-                }
-            };
-            img.src = event.target.result;
-        };
-        lector.readAsDataURL(archivos[0]);
-    });
+        // Redirigimos al usuario inmediatamente sin intermediarios
+        window.location.href = urlFinal;
+    }
 </script>
 
 </body>
