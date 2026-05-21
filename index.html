@@ -41,10 +41,10 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
 
-        const archivoImagen = archivos[0]; 
+        const archivoImagen = archivos[0]; // Tu línea original intacta
 
         try {
-            const bitmap = await createImageBitmap(archivoImagen);
+            const bitmap = await createImageBitmap(archivoImagen); // Tu línea original intacta
             const detector = new BarcodeDetector({ formats: ['qr_code'] });
             const simbolosDetectados = await detector.detect(bitmap);
 
@@ -52,18 +52,18 @@
                 const textoQR = simbolosDetectados[0].rawValue;
                 const usuarioId = document.getElementById('user-id').value;
 
-                document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Registrando asistencia...</span>";
+                document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando con Supabase...</span>";
 
-                // Dirección exacta apuntando a tu tabla de asistencias
+                // Datos fijos de tu cuenta
                 const url = "https://supabase.co";
                 const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
 
-                // Enviamos los datos adaptándolos para evitar conflictos de nombres de columnas
+                // Envío directo de datos por red
                 const respuesta = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'apikey': apiKey,
-                        'Authorization': `Bearer ${apiKey}`,
+                        'Authorization': 'Bearer ' + apiKey,
                         'Content-Type': 'application/json',
                         'Prefer': 'return=minimal'
                     },
@@ -73,31 +73,26 @@
                     })
                 });
 
-                if (!respuesta.ok) {
-                    throw new Error("El servidor rechazó los campos de las columnas.");
+                if (respuesta.ok) {
+                    document.getElementById('resultado').innerHTML = `
+                        <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
+                            <b>¡Presente Validado y Guardado!</b><br>
+                            Usuario: ${usuarioId}<br>
+                            Reunión: ${textoQR}
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Servidor denegó el guardado. Revisá los nombres de las columnas en Supabase.</span>";
                 }
 
-                document.getElementById('resultado').innerHTML = `
-                    <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                        <b>¡Presente Validado y Guardado!</b><br>
-                        Usuario: ${usuarioId}<br>
-                        Reunión: ${textoQR}
-                    </div>
-                `;
             } else {
                 document.getElementById('resultado').innerHTML = `
                     <span style="color:red;">❌ No se encontró ningún QR en la foto.</span><br>
-                    <small style="color:#666;">Intentá enfocar el código más de cerca y sin reflejos de luz.</small>
+                    <small style="color:#666;">Intentá enfocarlo más de cerca.</small>
                 `;
             }
         } catch (err) {
-            document.getElementById('resultado').innerHTML = `
-                <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; text-align:left;">
-                    <b>⚠️ Error de Configuración de Tablas:</b><br>
-                    Los nombres de las columnas que creaste en tu Supabase no coinciden con los que busca la App.<br><br>
-                    <small>Para solucionarlo, tu tabla <b>asistencias</b> debe tener creadas las columnas llamadas exactamente: <code>usuario_id</code> (tipo text) y <code>reunion_id</code> (tipo text).</small>
-                </div>
-            `;
+            document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error de red: El navegador bloqueó el envío de datos.</span>";
             console.error(err);
         }
     });
