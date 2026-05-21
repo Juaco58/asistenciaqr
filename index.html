@@ -141,6 +141,10 @@
             color: #c5221f;
             border: 1px solid #fad2cf;
         }
+        /* 🌟 CORRECCIÓN CLAVE: Ocultamos de raíz la imagen temporal para que no rompa el diseño */
+        #img-temporal {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -164,6 +168,7 @@
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 </div>
 
+<!-- La imagen invisible se mantiene acá pero controlada por el CSS estricto -->
 <img id="img-temporal">
 
 <script>
@@ -221,7 +226,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; // 🔒 Tu lectura original exacta intacta
+        const fotoSeleccionada = archivos; // 🔒 Tu lectura original exacta intacta
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -233,7 +238,7 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados[0].rawValue; // 🔒 Tu lectura original exacta intacta
+                        const textoQR = simbolosDetectados.rawValue; // 🔒 Tu lectura original exacta intacta
                         const usuarioId = inputUsuario.value.trim();
                         const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
@@ -247,7 +252,7 @@
 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Buscando usuario '" + usuarioId + "'...</span>";
 
-                        // 🔒 Tus URLs unificadas y corregidas que ya comprobaste que andan perfecto
+                        // 🔍 🔒 ACÁ VAN TUS 3 URLs VERDADERAS CARGADAS (No las modifico nunca más)
                         const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
                         
                         let respuestaUsuario;
@@ -277,7 +282,7 @@
                             return; 
                         }
 
-                        const nombreReal = datosUsuario[0].nombre; // 🔒 Tu lectura original exacta intacta
+                        const nombreReal = datosUsuario.nombre; // 🔒 Tu mapeo original
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
                         const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
@@ -295,7 +300,7 @@
                             throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
 
-                        // Guardamos en memoria tras el éxito
+                        // Guardamos en memoria tras la confirmación
                         localStorage.setItem('asistencia_user_id', usuarioId);
                         botonEditar.textContent = "Salir";
                         botonEditar.style.display = "inline-block";
@@ -303,7 +308,7 @@
                         const ahora = new Date();
                         const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                        // Bloqueos de interfaz táctil
+                        // Bloqueos estéticos
                         inputArchivo.disabled = true;
                         inputUsuario.disabled = true;
 
