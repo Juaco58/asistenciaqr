@@ -14,12 +14,15 @@
 </head>
 <body>
 
-<!-- TRUCO TÉCNICO: Formulario invisible que apunta directamente a los servidores de Google -->
+<!-- Formulario invisible configurado correctamente -->
 <form id="google-form" action="" method="POST" target="hidden_iframe" onsubmit="mostrarExito()">
     <input type="hidden" id="entry-usuario" name="">
     <input type="hidden" id="entry-reunion" name="">
+    <!-- El botón oculto real que usará JavaScript para no romper el envío -->
+    <input type="submit" id="submit-real-oculto" style="display: none;">
 </form>
-<!-- Iframe oculto para que la página de Google no se abra y el usuario se quede en tu app -->
+
+<!-- Iframe oculto para retener la respuesta en segundo plano -->
 <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 
 <div class="container">
@@ -37,19 +40,19 @@
     
     <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
 
-    <!-- Paso 2: Botón de confirmación oficial requerido por Google -->
+    <!-- Botón visual que toca el usuario -->
     <button id="btn-confirmar" class="btn-confirmar" onclick="enviarAGoogle()">Paso 2: Confirmar Presente 🚀</button>
 </div>
 
 <script>
     // =======================================================
-    // CONFIGURACIÓN DE TU GOOGLE FORM (Completalo con tus datos)
+    // CONFIGURACIÓN DE TU GOOGLE FORM (Reemplazá con tus datos reales)
     // =======================================================
-    const ID_FORMULARIO = "1FAIpQLSfXXXXXXXXXXXXX"; // El código largo de tu formulario
-    const NUMERO_CAMPO_USUARIO = "111111";         // El número de la pregunta 'usuario'
-    const NUMERO_CAMPO_REUNION = "222222";         // El número de la pregunta 'reunion'
+    const ID_FORMULARIO = "1FAIpQLSfXXXXXXXXXXXXX"; // Código largo de tu formulario
+    const NUMERO_CAMPO_USUARIO = "111111";         // Número de la pregunta 'usuario'
+    const NUMERO_CAMPO_REUNION = "222222";         // Número de la pregunta 'reunion'
 
-    // Configuramos el formulario oculto automáticamente al cargar la página
+    // Armamos la estructura de los campos
     const formHtml = document.getElementById('google-form');
     formHtml.action = `https://google.com{ID_FORMULARIO}/formResponse`;
     document.getElementById('entry-usuario').name = `entry.${NUMERO_CAMPO_USUARIO}`;
@@ -67,15 +70,15 @@
         document.getElementById('btn-confirmar').style.display = "none";
 
         try {
-            const bitmap = await createImageBitmap(archivos[0]); 
+            const bitmap = await createImageBitmap(archivos); 
             const detector = new BarcodeDetector({ formats: ['qr_code'] });
             const simbolosDetectados = await detector.detect(bitmap);
 
             if (simbolosDetectados.length > 0) {
-                const textoQR = simbolosDetectados[0].rawValue;
+                const textoQR = simbolosDetectados.rawValue;
                 const usuarioId = document.getElementById('user-id').value;
 
-                // Guardamos los datos leídos dentro de las casillas ocultas del formulario
+                // Cargamos los datos leídos
                 document.getElementById('entry-usuario').value = usuarioId;
                 document.getElementById('entry-reunion').value = textoQR;
 
@@ -86,30 +89,28 @@
                     </div>
                 `;
                 
-                // Mostramos el botón oficial de envío
                 document.getElementById('btn-confirmar').style.display = "block";
 
             } else {
                 document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se encontró ningún QR en la foto.</span>`;
             }
         } catch (err) {
-            document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error al procesar archivo.</span>";
+            document.getElementById('resultado').innerHTML = "<span style='color:#721c24;'>❌ Error al procesar imagen.</span>";
             console.error(err);
         }
     });
 
     function enviarAGoogle() {
-        // Ejecuta el envío oficial nativo del formulario HTML hacia Google
-        document.getElementById('google-form').submit();
+        // CORRECCIÓN CLAVE: Simulamos el clic real del elemento submit para no romper el iframe
+        document.getElementById('submit-real-oculto').click(); [1.35]
     }
 
     function mostrarExito() {
-        // Se ejecuta automáticamente cuando el formulario sale hacia internet
         document.getElementById('btn-confirmar').style.display = "none";
         document.getElementById('resultado').innerHTML = `
             <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
                 <b>¡Presente Guardado con éxito!</b><br>
-                Los datos ya están asentados en el Excel del administrador.
+                Los datos ya impactaron en la lista de presentes.
             </div>
         `;
     }
