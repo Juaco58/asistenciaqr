@@ -10,9 +10,6 @@
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
         #img-temporal { display: none; }
-        /* 🌟 Estilo para el nuevo botón Cambiar ID */
-        .btn-cambiar { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; margin-left: 5px; vertical-align: middle; }
-        .btn-cambiar:hover { background: #5a6268; }
     </style>
 </head>
 <body>
@@ -24,11 +21,7 @@
 
     <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
         <label><b>Tu ID de Usuario asignado:</b></label>
-        <!-- 🌟 Cambiado: Ajuste en la estructura para que el botón entre al lado prolijamente -->
-        <div style="display: flex; margin-top: 5px;">
-            <input type="text" id="user-id" value="USR-001" style="width: 75%; padding: 8px; box-sizing: border-box;">
-            <button type="button" id="btn-editar-id" class="btn-cambiar">Cambiar</button>
-        </div>
+        <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
     </div>
 
     <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
@@ -44,60 +37,16 @@
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
 
-    const inputUsuario = document.getElementById('user-id');
-    const botonEditar = document.getElementById('btn-editar-id');
-
-    // 🌟 1. AUTO-CARGA DE MEMORIA: Si ya hay un ID guardado de antes, lo bloquea y lo muestra
-    const idGuardado = localStorage.getItem('asistencia_user_id');
-    if (idGuardado) {
-        inputUsuario.value = idGuardado;
-        inputUsuario.disabled = true;
-        inputUsuario.style.background = "#e9ecef";
-        botonEditar.textContent = "Cambiar";
-    } else {
-        botonEditar.style.display = "none"; // Se oculta temporalmente si la app empieza de cero
-    }
-
-    // 🌟 2. ACCIÓN DEL BOTÓN CAMBIAR: Si se equivocó de ID, borra memoria, limpia y deja editar
-    botonEditar.addEventListener('click', function() {
-        localStorage.removeItem('asistencia_user_id'); 
-        inputUsuario.value = "";
-        inputUsuario.disabled = false;
-        inputUsuario.style.background = "white";
-        botonEditar.style.display = "none"; 
-        
-        const inputArchivo = document.getElementById('qr-file-input');
-        inputArchivo.disabled = false;
-        inputArchivo.style.background = "#007bff";
-        inputArchivo.style.cursor = "pointer";
-        document.getElementById('resultado').innerHTML = "";
-    });
-
-    // Muestra el botón para limpiar si el usuario tipea a mano un ID por primera vez
-    inputUsuario.addEventListener('input', function() {
-        if (inputUsuario.value.trim().length > 0) {
-            botonEditar.textContent = "Limpiar";
-            botonEditar.style.display = "inline-block";
-        } else {
-            botonEditar.style.display = "none";
-        }
-    });
-
     document.getElementById('qr-file-input').addEventListener('change', function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
         const inputArchivo = document.getElementById('qr-file-input');
-
-        if (!inputUsuario.value.trim()) {
-            document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ Por favor, ingresá tu ID de usuario antes de escanear.</span>`;
-            inputArchivo.value = "";
-            return;
-        }
+        const inputUsuario = document.getElementById('user-id');
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos[0]; // 🌟 Mantenemos tu extracción individual nativa exacta
+        const fotoSeleccionada = archivos[0]; 
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -109,124 +58,10 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados[0].rawValue; // 🌟 Tu decodificación original intacta
+                        const textoQR = simbolosDetectados[0].rawValue;
                         const usuarioId = inputUsuario.value;
 
-                        const SUPABASE_URL = "<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Profesional</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
-        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
-        .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
-        #img-temporal { display: none; }
-        /* 🌟 Estilo para el nuevo botón Cambiar ID */
-        .btn-cambiar { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; margin-left: 5px; vertical-align: middle; }
-        .btn-cambiar:hover { background: #5a6268; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <h2>Control de Asistencia Profesional</h2>
-    
-    <div class="status">Conectado al Servidor</div>
-
-    <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
-        <label><b>Tu ID de Usuario asignado:</b></label>
-        <!-- 🌟 Cambiado: Ajuste en la estructura para que el botón entre al lado prolijamente -->
-        <div style="display: flex; margin-top: 5px;">
-            <input type="text" id="user-id" value="USR-001" style="width: 75%; padding: 8px; box-sizing: border-box;">
-            <button type="button" id="btn-editar-id" class="btn-cambiar">Cambiar</button>
-        </div>
-    </div>
-
-    <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
-    <input type="file" accept="image/*" id="qr-file-input" class="input-file">
-    
-    <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
-</div>
-
-<img id="img-temporal">
-
-<script>
-    if (!('BarcodeDetector' in window)) {
-        alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
-    }
-
-    const inputUsuario = document.getElementById('user-id');
-    const botonEditar = document.getElementById('btn-editar-id');
-
-    // 🌟 1. AUTO-CARGA DE MEMORIA: Si ya hay un ID guardado de antes, lo bloquea y lo muestra
-    const idGuardado = localStorage.getItem('asistencia_user_id');
-    if (idGuardado) {
-        inputUsuario.value = idGuardado;
-        inputUsuario.disabled = true;
-        inputUsuario.style.background = "#e9ecef";
-        botonEditar.textContent = "Cambiar";
-    } else {
-        botonEditar.style.display = "none"; // Se oculta temporalmente si la app empieza de cero
-    }
-
-    // 🌟 2. ACCIÓN DEL BOTÓN CAMBIAR: Si se equivocó de ID, borra memoria, limpia y deja editar
-    botonEditar.addEventListener('click', function() {
-        localStorage.removeItem('asistencia_user_id'); 
-        inputUsuario.value = "";
-        inputUsuario.disabled = false;
-        inputUsuario.style.background = "white";
-        botonEditar.style.display = "none"; 
-        
-        const inputArchivo = document.getElementById('qr-file-input');
-        inputArchivo.disabled = false;
-        inputArchivo.style.background = "#007bff";
-        inputArchivo.style.cursor = "pointer";
-        document.getElementById('resultado').innerHTML = "";
-    });
-
-    // Muestra el botón para limpiar si el usuario tipea a mano un ID por primera vez
-    inputUsuario.addEventListener('input', function() {
-        if (inputUsuario.value.trim().length > 0) {
-            botonEditar.textContent = "Limpiar";
-            botonEditar.style.display = "inline-block";
-        } else {
-            botonEditar.style.display = "none";
-        }
-    });
-
-    document.getElementById('qr-file-input').addEventListener('change', function(e) {
-        const archivos = e.target.files;
-        if (archivos.length === 0) return;
-
-        const inputArchivo = document.getElementById('qr-file-input');
-
-        if (!inputUsuario.value.trim()) {
-            document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ Por favor, ingresá tu ID de usuario antes de escanear.</span>`;
-            inputArchivo.value = "";
-            return;
-        }
-
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
-
-        const fotoSeleccionada = archivos[0]; // 🌟 Mantenemos tu extracción individual nativa exacta
-        const lectorArchivo = new FileReader();
-
-        lectorArchivo.onload = function(eventoUrl) {
-            const imagenInvisble = document.getElementById('img-temporal');
-            
-            imagenInvisble.onload = async function() {
-                try {
-                    const detector = new BarcodeDetector({ formats: ['qr_code'] });
-                    const simbolosDetectados = await detector.detect(imagenInvisble);
-
-                    if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados[0].rawValue; // 🌟 Tu decodificación original intacta
-                        const usuarioId = inputUsuario.value;
-
-                        const SUPABASE_URL = "https://supabase.co";
+                        const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
                         
                         const cabeceras = {
@@ -248,17 +83,17 @@
                                 headers: cabeceras
                             });
                         } catch (errNet) {
+                            // 🌟 MEJORA: Te muestra el error crudo real de la red para saber qué lo bloquea
                             throw new Error("Falla de Red Física: " + errNet.message + ". Revisá tu conexión o el estado del servidor de Supabase web.");
                         }
                         
                         if (!respuestaUsuario.ok) {
                             const errorTexto = await respuestaUsuario.text();
-                            throw new Error("Supabase responded con error: " + errorTexto);
+                            throw new Error("Supabase respondió con error: " + errorTexto);
                         }
 
                         const datosUsuario = await respuestaUsuario.json();
 
-                        // 🌟 ESCUDO PROTECTOR: Si el ID no figura en Supabase, frena acá y NO guarda nada erróneo en la memoria del celu
                         if (!datosUsuario || datosUsuario.length === 0) {
                             document.getElementById('resultado').innerHTML = `
                                 <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
@@ -269,7 +104,7 @@
                             return; 
                         }
 
-                        const nombreReal = datosUsuario[0].nombre; // Tu extracción de nombre exacta
+                        const nombreReal = datosUsuario[0].nombre; 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
                         // 🚀 PROCESO 2: POST ASISTENCIAS
@@ -288,130 +123,15 @@
                             throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
 
-                        // 🌟 ÉXITO CONFIRMADO: Guardamos el ID validado de forma permanente en el almacenamiento local del teléfono
-                        localStorage.setItem('asistencia_user_id', usuarioId);
-
-                        // 🕒 OBTENER HORA LOCAL LIMPIA
+                        // 🕒 OBTENER HORA LOCAL
                         const ahora = new Date();
                         const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                        // 🔒 BLOQUEO DE CONTROLES POST-REGISTRO
+                        // 🔒 BLOQUEO DE INPUTS
                         inputArchivo.disabled = true;
                         inputUsuario.disabled = true;
                         inputArchivo.style.background = "#6c757d";
                         inputArchivo.style.cursor = "not-allowed";
-                        
-                        // Transformamos el botón para que sirva para cerrar sesión o cambiar de cuenta
-                        botonEditar.textContent = "Salir";
-                        botonEditar.style.display = "inline-block";
-
-                        document.getElementById('resultado').innerHTML = `
-                            <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
-                                <b>¡Presente Confirmado! ✅</b><br>
-                                Bienvenido/a, <b>${nombreReal}</b>.<br>
-                                <span style="color:#155724; font-size: 14px;">Registrado localmente a las <b>${horaLocal}</b>.</span><br>
-                                <small style="color:#555; display:block; margin-top:5px;">Comprobante digital válido en la nube.</small>
-                            </div>
-                        `;
-
-                    } else {
-                        document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se detectó ningún QR en la foto.</span>`;
-                    }
-                } catch (err) {
-                    document.getElementById('resultado').innerHTML = `
-                        <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; text-align:left; font-size:14px;">
-                            <b>⚠️ Alerta del Servidor:</b><br>${err.message}
-                        </div>
-                    `;
-                    console.error(err);
-                }
-            };
-            imagenInvisble.src = eventoUrl.target.result;
-        };
-        lectorArchivo.readAsDataURL(fotoSeleccionada);
-    });
-</script>
-
-</body>
-</html>
-";
-                        const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
-                        
-                        const cabeceras = {
-                            'apikey': apiKey,
-                            'Authorization': 'Bearer ' + apiKey,
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        };
-
-                        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Buscando usuario '" + usuarioId + "'...</span>";
-
-                        // 🔍 PROCESO 1: GET USUARIOS
-                        const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
-                        
-                        let respuestaUsuario;
-                        try {
-                            respuestaUsuario = await fetch(urlUsuarios, { 
-                                method: 'GET', 
-                                headers: cabeceras
-                            });
-                        } catch (errNet) {
-                            throw new Error("Falla de Red Física: " + errNet.message + ". Revisá tu conexión o el estado del servidor de Supabase web.");
-                        }
-                        
-                        if (!respuestaUsuario.ok) {
-                            const errorTexto = await respuestaUsuario.text();
-                            throw new Error("Supabase responded con error: " + errorTexto);
-                        }
-
-                        const datosUsuario = await respuestaUsuario.json();
-
-                        // 🌟 ESCUDO PROTECTOR: Si el ID no figura en Supabase, frena acá y NO guarda nada erróneo en la memoria del celu
-                        if (!datosUsuario || datosUsuario.length === 0) {
-                            document.getElementById('resultado').innerHTML = `
-                                <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
-                                    <b>❌ Acceso Denegado</b><br>
-                                    El ID de usuario <b>${usuarioId}</b> no figura en la tabla 'usuarios'.
-                                </div>
-                            `;
-                            return; 
-                        }
-
-                        const nombreReal = datosUsuario[0].nombre; // Tu extracción de nombre exacta
-                        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
-
-                        // 🚀 PROCESO 2: POST ASISTENCIAS
-                        const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
-                        const respuestaAsistencia = await fetch(urlAsistencias, {
-                            method: 'POST',
-                            headers: { ...cabeceras, 'Prefer': 'return=minimal' },
-                            body: JSON.stringify({
-                                usuario_id: usuarioId,
-                                reunion_id: textoQR
-                            })
-                        });
-
-                        if (!respuestaAsistencia.ok) {
-                            const errorTextoAsis = await respuestaAsistencia.text();
-                            throw new Error("Error al guardar asistencia: " + errorTextoAsis);
-                        }
-
-                        // 🌟 ÉXITO CONFIRMADO: Guardamos el ID validado de forma permanente en el almacenamiento local del teléfono
-                        localStorage.setItem('asistencia_user_id', usuarioId);
-
-                        // 🕒 OBTENER HORA LOCAL LIMPIA
-                        const ahora = new Date();
-                        const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                        // 🔒 BLOQUEO DE CONTROLES POST-REGISTRO
-                        inputArchivo.disabled = true;
-                        inputUsuario.disabled = true;
-                        inputArchivo.style.background = "#6c757d";
-                        inputArchivo.style.cursor = "not-allowed";
-                        
-                        // Transformamos el botón para que sirva para cerrar sesión o cambiar de cuenta
-                        botonEditar.textContent = "Salir";
-                        botonEditar.style.display = "inline-block";
 
                         document.getElementById('resultado').innerHTML = `
                             <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
