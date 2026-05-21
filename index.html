@@ -3,113 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Asistencia QR Nativa</title>
+    <title>Asistencia QR Directa</title>
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
-        .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
-        .btn-google { display: none; background: #28a745; color: white; text-decoration: none; padding: 15px; border-radius: 5px; font-size: 18px; font-weight: bold; margin-top: 20px; display: inline-block; box-sizing: border-box; width: 100%; }
-        #img-temporal { display: none; }
+        .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; margin-bottom: 20px; }
+        .btn-confirmar { background: #28a745; color: white; border: none; padding: 16px 20px; border-radius: 5px; font-size: 18px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
+        input[type="text"] { width: 95%; padding: 10px; margin-top: 5px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Control de Asistencia Nativo</h2>
+    <h2>Control de Asistencia Directo</h2>
     
     <div class="status">Sistema Listo</div>
 
-    <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
-        <label><b>Tu ID de Usuario asignado:</b></label>
-        <!-- Al cambiar este campo, el enlace se actualiza automáticamente abajo -->
-        <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;" oninput="actualizarEnlaceBase()">
-    </div>
+    <!-- Formulario nativo puro que el celular no puede bloquear bajo ningún concepto -->
+    <form action="https://google.com" method="GET" target="_blank">
+        
+        <!-- Parámetro oculto para avisar a Google que va con datos prellenados -->
+        <input type="hidden" name="usp" value="pp_url">
 
-    <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
-    <input type="file" accept="image/*" id="qr-file-input" class="input-file">
-    
-    <div id="resultado" style="margin-top:20px; font-weight:bold; color:#333; padding: 10px; font-size: 16px;"></div>
+        <div style="text-align: left;">
+            <label><b>1. Escribí tu ID de Usuario:</b></label>
+            <input type="text" name="entry.2133752850" value="USR-001" required>
+        </div>
 
-    <!-- Enlace nativo puro que el navegador no puede bloquear al hacer clic -->
-    <a id="boton-confirmar" class="btn-google">2. CONFIRMAR PRESENTE 🚀</a>
+        <div style="text-align: left;">
+            <label><b>2. Copiá o escribí el código del QR:</b></label>
+            <input type="text" name="entry.1601257763" value="https://me-qr.com" required>
+        </div>
+
+        <!-- Botón de envío estándar de HTML -->
+        <button type="submit" class="btn-confirmar">CONFIRMAR PRESENTE 🚀</button>
+    </form>
 </div>
-
-<img id="img-temporal">
-
-<script>
-    const ID_FORMULARIO = "1FAIpQLSfo3_nlRPwOmoM2kCbIw9VP5TQHm7jK8taAZdILR1JLN6XURg"; 
-    const CAMPO_USUARIO = "2133752850";         
-    const CAMPO_REUNION = "1601257763";         
-
-    // Función para armar el enlace apenas abre la página o cambia el usuario
-    function actualizarEnlaceBase(textoQR = "") {
-        const usuarioId = document.getElementById('user-id').value;
-        var urlPrellenada = "https://google.com" + ID_FORMULARIO + "/viewform?usp=pp_url";
-        urlPrellenada += "&entry." + CAMPO_USUARIO + "=" + encodeURIComponent(usuarioId);
-        if (textoQR !== "") {
-            urlPrellenada += "&entry." + CAMPO_REUNION + "=" + encodeURIComponent(textoQR);
-        }
-        document.getElementById('boton-confirmar').href = urlPrellenada;
-    }
-
-    // Inicializamos el enlace con el usuario por defecto (USR-001)
-    actualizarEnlaceBase();
-
-    if (!('BarcodeDetector' in window)) {
-        alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
-    }
-
-    document.getElementById('qr-file-input').addEventListener('change', function(e) {
-        const archivos = e.target.files;
-        if (archivos.length === 0) return;
-
-        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Analizando QR de forma nativa...</span>";
-        document.getElementById('boton-confirmar').style.display = "none";
-
-        const fotoSeleccionada = archivos; 
-        const lectorArchivo = new FileReader();
-
-        lectorArchivo.onload = function(eventoUrl) {
-            const imagenInvisble = document.getElementById('img-temporal');
-            
-            imagenInvisble.onload = async function() {
-                try {
-                    const detector = new BarcodeDetector({ formats: ['qr_code'] });
-                    const simbolosDetectados = await detector.detect(imagenInvisble);
-
-                    if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados.rawValue;
-
-                        document.getElementById('resultado').innerHTML = `
-                            <div style="background:#fff3cd; color:#856404; padding:15px; border-radius:5px; border: 1px solid #ffeeba;">
-                                <b>¡QR Detectado con éxito!</b><br>
-                                Reunión: Código Reconocido
-                            </div>
-                        `;
-
-                        // Actualizamos el enlace final insertando los datos leídos del QR
-                        actualizarEnlaceBase(textoQR);
-
-                        // Hacemos visible el botón nativo
-                        document.getElementById('boton-confirmar').style.display = "block";
-
-                    } else {
-                        document.getElementById('resultado').innerHTML = `
-                            <span style="color:red;">❌ No se encontró ningún QR en la foto.</span><br>
-                            <small style="color:#666;">Intentá enfocar el código más de cerca y derecho.</small>
-                        `;
-                    }
-                } catch (err) {
-                    document.getElementById('resultado').innerHTML = "<span style='color:red;'>❌ Error al leer los píxeles del QR.</span>";
-                    console.error(err);
-                }
-            };
-            imagenInvisble.src = eventoUrl.target.result;
-        };
-        lectorArchivo.readAsDataURL(fotoSeleccionada);
-    });
-</script>
 
 </body>
 </html>
