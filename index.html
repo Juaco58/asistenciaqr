@@ -138,6 +138,7 @@
                                     El ID de usuario <b>${usuarioId}</b> no figura en la tabla 'usuarios'.
                                 </div>
                             `;
+                           inputArchivo.value = ""; // 🌟 Limpia el botón azul para destrabar el reintento si el DNI falla
                             return; 
                         }
 
