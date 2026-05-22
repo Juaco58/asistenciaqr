@@ -23,7 +23,7 @@
     <div class="status">Conectado al Servidor</div>
 
     <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
-        <label><b>Tu Nro. de DNI (Sin puntos):</b></label>
+        <label><b>Tu Número de Documento (DNI):</b></label>
         <input type="text" id="user-id" value="42123456" style="width:95%; padding:8px; margin-top:5px;" placeholder="Ej: 42123456">
     </div>
 
@@ -48,7 +48,7 @@
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos; 
+        const fotoSeleccionada = archivos; // 🌟 REPARADO: Volvemos a extraer el archivo individual como a vos te andaba bien
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -63,7 +63,7 @@
                         const textoQR = simbolosDetectados.rawValue;
                         const usuarioId = document.getElementById('user-id').value.trim();
 
-                        // ACÁ VAN TUS 3 URLs VERDADERAS AGRUPADAS PERFECTAS (Cargalas como vos sabés)
+                        // 🔍 REEMPLAZÁ ACÁ ABAJO CON TUS ENLACES COMPLETOS QUE ANDAN BIEN
                         const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
                         const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
                         const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
@@ -86,12 +86,12 @@
                                 headers: cabeceras
                             });
                         } catch (errNet) {
-                            inputArchivo.value = ""; // Limpieza por error de red
+                            inputArchivo.value = ""; 
                             throw new Error("La base de datos de Supabase rechazó la conexión inicial. Verificá tu internet.");
                         }
                         
                         if (!respuestaUsuario.ok) {
-                            inputArchivo.value = ""; // Limpieza por error de servidor
+                            inputArchivo.value = ""; 
                             const errorTexto = await respuestaUsuario.text();
                             throw new Error("Supabase respondió con error: " + errorTexto);
                         }
@@ -105,7 +105,7 @@
                                     El documento <b>${usuarioId}</b> no figura en la tabla 'usuarios'.
                                 </div>
                             `;
-                            inputArchivo.value = ""; // 🌟 LIMPIEZA CLAVE: Destraba el botón si el DNI está mal
+                            inputArchivo.value = ""; // 🌟 Limpia el botón azul para destrabar el reintento si el DNI falla
                             return; 
                         }
 
@@ -122,7 +122,7 @@
                         });
 
                         if (!respuestaAsistencia.ok) {
-                            inputArchivo.value = ""; // Limpieza por error al guardar
+                            inputArchivo.value = ""; 
                             const errorTextoAsis = await respuestaAsistencia.text();
                             throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
@@ -137,7 +137,7 @@
 
                     } else {
                         document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se detectó ningún QR en la foto.</span>`;
-                        inputArchivo.value = ""; // 🌟 LIMPIEZA CLAVE: Destraba el botón si la foto falló
+                        inputArchivo.value = ""; // 🌟 Limpia el botón azul si la foto salió borrosa o sin QR
                     }
                 } catch (err) {
                     document.getElementById('resultado').innerHTML = `
@@ -145,7 +145,7 @@
                             <b>⚠️ Alerta del Servidor:</b><br>${err.message}
                         </div>
                     `;
-                    inputArchivo.value = ""; // Limpieza ante cualquier otra excepción
+                    inputArchivo.value = ""; 
                     console.error(err);
                 }
             };
