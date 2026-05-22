@@ -9,10 +9,13 @@
         .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
         .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
-        
+        #img-temporal { display: none; }
+        .btn-cambiar { background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 4px; font-size: 14px; font-weight: bold; cursor: pointer; margin-left: 5px; vertical-align: middle; }
+        .btn-cambiar:hover { background: #5a6268; }
         #img-temporal { 
             display: none !important; 
         }
+    </style>
     </style>
 </head>
 <body>
@@ -23,8 +26,12 @@
     <div class="status">Conectado al Servidor</div>
 
     <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
-        <label><b>Tu Número de Documento (DNI):</b></label>
-        <input type="text" id="user-id" value="42123456" style="width:95%; padding:8px; margin-top:5px;" placeholder="Ej: 42123456">
+        <label><b>Tu Nro de DNI (sin puntos):</b></label>
+        <div style="display: flex; margin-top: 5px;">
+            <input type="text" id="user-id" value="12345678" style="width:95%; padding:8px; margin-top:5px;" placeholder="Ej: 12345678">
+
+            <button type="button" id="btn-editar-id" class="btn-cambiar">Cambiar</button>
+        </div>
     </div>
 
     <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
@@ -40,15 +47,45 @@
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
 
+    const inputUsuario = document.getElementById('user-id');
+    const botonEditar = document.getElementById('btn-editar-id');
+
+    // 🌟 CONTROL DE MEMORIA
+    const idGuardado = localStorage.getItem('asistencia_user_id');
+    if (idGuardado) {
+        inputUsuario.value = idGuardado;
+        botonEditar.textContent = "Cambiar";
+    } else {
+        botonEditar.style.display = "none"; 
+    }
+
+    // 🌟 BOTÓN CAMBIAR: Borra memoria y habilita edición
+    botonEditar.addEventListener('click', function() {
+        localStorage.removeItem('asistencia_user_id'); 
+        inputUsuario.value = "";
+        botonEditar.style.display = "none"; 
+        document.getElementById('resultado').innerHTML = "";
+    });
+
+    inputUsuario.addEventListener('input', function() {
+        if (inputUsuario.value.trim().length > 0) {
+            botonEditar.textContent = "Limpiar";
+            botonEditar.style.display = "inline-block";
+        } else {
+            botonEditar.style.display = "none";
+        }
+    });
+
     document.getElementById('qr-file-input').addEventListener('change', function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
         const inputArchivo = document.getElementById('qr-file-input');
+        const inputUsuario = document.getElementById('user-id');
 
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos; // 🌟 REPARADO: Volvemos a extraer el archivo individual como a vos te andaba bien
+        const fotoSeleccionada = archivos[0]; // 🔒 Tu extracción original intacta
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -60,14 +97,9 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados.rawValue;
-                        const usuarioId = document.getElementById('user-id').value.trim();
-
-                        // 🔍 REEMPLAZÁ ACÁ ABAJO CON TUS ENLACES COMPLETOS QUE ANDAN BIEN
+                        const textoQR = simbolosDetectados[0].rawValue; // 🔒 Tu lectura original intacta
+                        const usuarioId = inputUsuario.value;
                         const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
-                        const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
-                        const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
-
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
                         
                         const cabeceras = {
@@ -79,6 +111,9 @@
 
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Buscando usuario '" + usuarioId + "'...</span>";
 
+                        // 🔍 PROCESO 1: URL UNIFICADA CON TU SUBDOMINIO REAL
+                        const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
+                        
                         let respuestaUsuario;
                         try {
                             respuestaUsuario = await fetch(urlUsuarios, { 
@@ -86,12 +121,10 @@
                                 headers: cabeceras
                             });
                         } catch (errNet) {
-                            inputArchivo.value = ""; 
-                            throw new Error("La base de datos de Supabase rechazó la conexión inicial. Verificá tu internet.");
+                            throw new Error("Falla de Red Física: " + errNet.message + ". Verificá tu conexión a internet.");
                         }
                         
                         if (!respuestaUsuario.ok) {
-                            inputArchivo.value = ""; 
                             const errorTexto = await respuestaUsuario.text();
                             throw new Error("Supabase respondió con error: " + errorTexto);
                         }
@@ -102,16 +135,17 @@
                             document.getElementById('resultado').innerHTML = `
                                 <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
                                     <b>❌ Acceso Denegado</b><br>
-                                    El documento <b>${usuarioId}</b> no figura en la tabla 'usuarios'.
+                                    El ID de usuario <b>${usuarioId}</b> no figura en la tabla 'usuarios'.
                                 </div>
                             `;
-                            inputArchivo.value = ""; // 🌟 Limpia el botón azul para destrabar el reintento si el DNI falla
                             return; 
                         }
 
-                        const nombreReal = datosUsuario.nombre; 
+                        const nombreReal = datosUsuario[0].nombre; // 🔒 Tu mapeo original
                         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
 
+                        // 🚀 PROCESO 2: URL UNIFICADA CON TU SUBDOMINIO REAL
+                        const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
                         const respuestaAsistencia = await fetch(urlAsistencias, {
                             method: 'POST',
                             headers: { ...cabeceras, 'Prefer': 'return=minimal' },
@@ -122,22 +156,35 @@
                         });
 
                         if (!respuestaAsistencia.ok) {
-                            inputArchivo.value = ""; 
                             const errorTextoAsis = await respuestaAsistencia.text();
                             throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
+
+                        // Guardamos recién tras la confirmación exitosa
+                        localStorage.setItem('asistencia_user_id', usuarioId);
+                        botonEditar.textContent = "Cambiar";
+                        botonEditar.style.display = "inline-block";
+
+                        const ahora = new Date();
+                        const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                        // Bloqueos de seguridad post-éxito
+                        inputArchivo.disabled = true;
+                        inputUsuario.disabled = true;
+                        inputArchivo.style.background = "#6c757d";
+                        inputArchivo.style.cursor = "not-allowed";
 
                         document.getElementById('resultado').innerHTML = `
                             <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
                                 <b>¡Presente Confirmado! ✅</b><br>
                                 Bienvenido/a, <b>${nombreReal}</b>.<br>
-                                <small style="color:#555;">Asistencia registrada automáticamente en la nube.</small>
+                                <span style="color:#155724; font-size: 14px;">Registrado localmente a las <b>${horaLocal}</b>.</span><br>
+                                <small style="color:#555; display:block; margin-top:5px;">Asistencia registrada automáticamente en la nube.</small>
                             </div>
                         `;
 
                     } else {
                         document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se detectó ningún QR en la foto.</span>`;
-                        inputArchivo.value = ""; // 🌟 Limpia el botón azul si la foto salió borrosa o sin QR
                     }
                 } catch (err) {
                     document.getElementById('resultado').innerHTML = `
@@ -145,7 +192,6 @@
                             <b>⚠️ Alerta del Servidor:</b><br>${err.message}
                         </div>
                     `;
-                    inputArchivo.value = ""; 
                     console.error(err);
                 }
             };
