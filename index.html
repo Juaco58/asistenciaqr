@@ -64,9 +64,9 @@
 
                         // 🌟 TUS TRES CONSTANTES AGRUPADAS PARA CAMBIAR RÁPIDO
                         const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
-                        const urlUsuarios = baseUrl + "/rest/v1/usuarios?id=eq." + encodeURIComponent(usuarioId) + "&select=nombre";
-                        const urlAsistencias = baseUrl + "/rest/v1/asistencias";
-
+                        const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
+                        const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
+                        
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
                         
                         const cabeceras = {
