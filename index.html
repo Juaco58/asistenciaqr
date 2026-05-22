@@ -5,145 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Asistencia QR Profesional</title>
     <style>
-        /* 🎨 Rediseño Visual Móvil Premium */
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            text-align: center; 
-            background: #f0f2f5; 
-            margin: 0; 
-            padding: 16px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            box-sizing: border-box;
-        }
-        .container { 
-            max-width: 420px; 
-            width: 100%;
-            background: #ffffff; 
-            padding: 24px; 
-            border-radius: 16px; 
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); 
-            box-sizing: border-box;
-        }
-        h2 {
-            color: #1a1a1a;
-            font-size: 22px;
-            margin-top: 0;
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-        .status { 
-            margin-top: 8px; 
-            margin-bottom: 24px;
-            padding: 8px 12px; 
-            border-radius: 20px; 
-            font-weight: 600; 
-            font-size: 13px;
-            background: #e6f4ea; 
-            color: #137333; 
-            display: inline-block;
-        }
-        .input-group {
-            margin-bottom: 24px;
-            text-align: left;
-        }
-        label {
-            font-size: 14px;
-            color: #4a4a4a;
-            font-weight: 600;
-            display: block;
-            margin-bottom: 8px;
-        }
-        .input-row {
-            display: flex;
-            gap: 8px;
-        }
-        input[type="text"] {
-            flex: 1;
-            padding: 12px 14px; 
-            border: 1.5px solid #dcdcdc;
-            border-radius: 10px;
-            font-size: 15px;
-            color: #333;
-            background: #ffffff;
-            transition: border-color 0.2s, background-color 0.2s;
-            box-sizing: border-box;
-        }
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #007bff;
-        }
-        input[type="text"]:disabled {
-            background: #f1f3f4;
-            color: #5f6368;
-            border-color: #e0e0e0;
-        }
-        .btn-cambiar { 
-            background: #f1f3f4; 
-            color: #3c4043; 
-            border: 1.5px solid #dcdcdc;
-            padding: 0 16px; 
-            border-radius: 10px; 
-            font-size: 14px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            transition: background 0.2s, color 0.2s;
-        }
-        .btn-cambiar:hover { 
-            background: #e8eaed; 
-        }
-        .input-file { 
-            width: 100%; 
-            padding: 16px; 
-            background: #007bff; 
-            color: #ffffff; 
-            border: none; 
-            border-radius: 12px; 
-            font-size: 16px; 
-            font-weight: 700; 
-            cursor: pointer; 
-            box-sizing: border-box; 
-            transition: background 0.2s, transform 0.1s;
-            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.2);
-        }
-        .input-file:hover {
-            background: #0069d9;
-        }
-        .input-file:active {
-            transform: scale(0.98);
-        }
-        .input-file:disabled {
-            background: #6c757d !important;
-            box-shadow: none;
-            cursor: not-allowed;
-        }
-        #resultado { 
-            margin-top: 20px; 
-            font-size: 15px; 
-            box-sizing: border-box;
-        }
-        /* Alertas estilizadas */
-        .alert {
-            padding: 16px;
-            border-radius: 12px;
-            text-align: left;
-            line-height: 1.5;
-        }
-        .alert-success {
-            background: #e6f4ea;
-            color: #137333;
-            border: 1px solid #c2e7cb;
-        }
-        .alert-danger {
-            background: #fce8e6;
-            color: #c5221f;
-            border: 1px solid #fad2cf;
-        }
-        /* 🌟 CORRECCIÓN DEL QR GIGANTE: Ocultamos de raíz la imagen para que no rompa la pantalla */
-        #img-temporal {
-            display: none !important;
+        body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
+        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .status { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; background: #d4edda; color: #155724; }
+        .input-file { width: 100%; padding: 15px; background: #007bff; color: white; border: none; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; box-sizing: border-box; width: 100%; }
+        
+        /* 🌟 CORRECCIÓN EXCLUSIVA: Evita que el QR se dibuje gigante abajo de la pantalla */
+        #img-temporal { 
+            display: none !important; 
         }
     </style>
 </head>
@@ -154,12 +23,9 @@
     
     <div class="status">Conectado al Servidor</div>
 
-    <div class="input-group">
+    <div style="margin-top: 15px; text-align: left; margin-bottom: 25px;">
         <label><b>Tu ID de Usuario asignado:</b></label>
-        <div class="input-row">
-            <input type="text" id="user-id" value="USR-001" placeholder="Ej: USR-001">
-            <button type="button" id="btn-editar-id" class="btn-cambiar">Cambiar</button>
-        </div>
+        <input type="text" id="user-id" value="USR-001" style="width:95%; padding:8px; margin-top:5px;">
     </div>
 
     <div style="text-align: left; margin-bottom: 10px;"><label><b>Sacá o seleccioná la foto del QR:</b></label></div>
@@ -175,57 +41,13 @@
         alert("Aviso: Tu navegador usará el procesador estándar para decodificar la imagen.");
     }
 
-    const inputUsuario = document.getElementById('user-id');
-    const botonEditar = document.getElementById('btn-editar-id');
-
-    // 🌟 CONTROL DE MEMORIA
-    const idGuardado = localStorage.getItem('asistencia_user_id');
-    if (idGuardado) {
-        inputUsuario.value = idGuardado;
-        inputUsuario.disabled = true;
-        botonEditar.textContent = "Cambiar";
-    } else {
-        botonEditar.style.display = "none"; 
-    }
-
-    // 🌟 BOTÓN CAMBIAR
-    botonEditar.addEventListener('click', function() {
-        localStorage.removeItem('asistencia_user_id'); 
-        inputUsuario.value = "";
-        inputUsuario.disabled = false;
-        botonEditar.style.display = "none"; 
-        
-        const inputArchivo = document.getElementById('qr-file-input');
-        inputArchivo.disabled = false;
-        inputArchivo.style.background = "#007bff";
-        inputArchivo.style.cursor = "pointer";
-        document.getElementById('resultado').innerHTML = "";
-    });
-
-    inputUsuario.addEventListener('input', function() {
-        if (inputUsuario.value.trim().length > 0) {
-            botonEditar.textContent = "Limpiar";
-            botonEditar.style.display = "inline-block";
-        } else {
-            botonEditar.style.display = "none";
-        }
-    });
-
     document.getElementById('qr-file-input').addEventListener('change', function(e) {
         const archivos = e.target.files;
         if (archivos.length === 0) return;
 
-        const inputArchivo = document.getElementById('qr-file-input');
-
-        if (!inputUsuario.value.trim()) {
-            document.getElementById('resultado').innerHTML = `<div class="alert alert-danger">❌ Por favor, ingresá tu ID de usuario antes de escanear.</div>`;
-            inputArchivo.value = "";
-            return;
-        }
-
         document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Conectando de ida y vuelta con la base de datos...</span>";
 
-        const fotoSeleccionada = archivos; // 🔒 Tu lectura original intacta
+        const fotoSeleccionada = archivos[0]; // 🔒 Tu extracción original idéntica que sí lee
         const lectorArchivo = new FileReader();
 
         lectorArchivo.onload = function(eventoUrl) {
@@ -237,13 +59,13 @@
                     const simbolosDetectados = await detector.detect(imagenInvisble);
 
                     if (simbolosDetectados.length > 0) {
-                        const textoQR = simbolosDetectados.rawValue; // 🔒 Tu lectura original intacta
-                        const usuarioId = inputUsuario.value.trim();
+                        const textoQR = simbolosDetectados[0].rawValue; // 🔒 Tu descodificación original intacta
+                        const usuarioId = document.getElementById('user-id').value;
 
-                        // 🌟 CONFIGURACIÓN DE RUTAS OFICIALES REESTABLECIDA CON TU PROYECTO REAL
+                        // 🌟 TUS TRES CONSTANTES AGRUPADAS PARA CAMBIAR RÁPIDO
                         const SUPABASE_URL = "https://ijyygmfieleqqtvvryfu.supabase.co";
-                         const urlUsuarios = `${SUPABASE_URL}/rest/v1/usuarios?id=eq.${encodeURIComponent(usuarioId)}&select=nombre`;
-                        const urlAsistencias = `${SUPABASE_URL}/rest/v1/asistencias`;
+                        const urlUsuarios = baseUrl + "/rest/v1/usuarios?id=eq." + encodeURIComponent(usuarioId) + "&select=nombre";
+                        const urlAsistencias = baseUrl + "/rest/v1/asistencias";
 
                         const apiKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlqeXlnbWZpZWxlcXF0dnZyeWZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyOTkwODcsImV4cCI6MjA5NDg3NTA4N30.VbQQNwZFEURnOPrvG9VnfZm2bOXKLHDdExdjAnECm8U";
                         
@@ -263,7 +85,7 @@
                                 headers: cabeceras
                             });
                         } catch (errNet) {
-                            throw new Error("Falla de Red Física. Verificá tu conexión a internet.");
+                            throw new Error("La base de datos de Supabase rechazó la conexión inicial. Verificá tu internet.");
                         }
                         
                         if (!respuestaUsuario.ok) {
@@ -275,7 +97,7 @@
 
                         if (!datosUsuario || datosUsuario.length === 0) {
                             document.getElementById('resultado').innerHTML = `
-                                <div class="alert alert-danger">
+                                <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; border: 1px solid #f5c6cb;">
                                     <b>❌ Acceso Denegado</b><br>
                                     El ID de usuario <b>${usuarioId}</b> no figura en la tabla 'usuarios'.
                                 </div>
@@ -283,8 +105,8 @@
                             return; 
                         }
 
-                        const nombreReal = datosUsuario.nombre; // 🔒 Tu mapeo original
-                        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia en la nube...</span>";
+                        const nombreReal = datosUsuario[0].nombre; // 🔒 Tu mapeo original que traía "Joaquin"
+                        document.getElementById('resultado').innerHTML = "<span style='color:#007bff;'>⏳ Insertando asistencia inyectando datos...</span>";
 
                         const respuestaAsistencia = await fetch(urlAsistencias, {
                             method: 'POST',
@@ -300,33 +122,20 @@
                             throw new Error("Error al guardar asistencia: " + errorTextoAsis);
                         }
 
-                        // Guardamos en memoria tras la confirmación
-                        localStorage.setItem('asistencia_user_id', usuarioId);
-                        botonEditar.textContent = "Salir";
-                        botonEditar.style.display = "inline-block";
-
-                        const ahora = new Date();
-                        const horaLocal = ahora.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                        // Bloqueos de interfaz
-                        inputArchivo.disabled = true;
-                        inputUsuario.disabled = true;
-
                         document.getElementById('resultado').innerHTML = `
-                            <div class="alert alert-success">
+                            <div style="background:#d4edda; color:green; padding:15px; border-radius:5px; border: 1px solid #c3e6cb;">
                                 <b>¡Presente Confirmado! ✅</b><br>
                                 Bienvenido/a, <b>${nombreReal}</b>.<br>
-                                <span style="font-size: 14px;">Registrado localmente a las <b>${horaLocal}</b>.</span><br>
-                                <small style="display:block; margin-top:5px; color: #137333;">Asistencia registrada automáticamente en la nube.</small>
+                                <small style="color:#555;">Asistencia registrada automáticamente en la nube.</small>
                             </div>
                         `;
 
                     } else {
-                        document.getElementById('resultado').innerHTML = `<div class="alert alert-danger">❌ No se detectó ningún QR en la foto.</div>`;
+                        document.getElementById('resultado').innerHTML = `<span style="color:red;">❌ No se detectó ningún QR en la foto.</span>`;
                     }
                 } catch (err) {
                     document.getElementById('resultado').innerHTML = `
-                        <div class="alert alert-danger">
+                        <div style="background:#f8d7da; color:#721c24; padding:15px; border-radius:5px; text-align:left; font-size:14px;">
                             <b>⚠️ Alerta del Servidor:</b><br>${err.message}
                         </div>
                     `;
