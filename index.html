@@ -234,6 +234,40 @@
         };
         lectorArchivo.readAsDataURL(fotoSeleccionada);
     });
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(reg => {
+      // Revisa si ya hay un SW esperando al cargar la página
+      if (reg.waiting) {
+        solicitarActualizacion(reg.waiting);
+      }
+
+      // Detecta si se instala un nuevo SW en segundo plano
+      reg.addEventListener('updatefound', () => {
+        const nuevoSW = reg.installing;
+        nuevoSW.addEventListener('statechange', () => {
+          if (nuevoSW.state === 'installed' && navigator.serviceWorker.controller) {
+            solicitarActualizacion(nuevoSW);
+          }
+        });
+      });
+    });
+
+  // Escucha el cambio de control para recargar la página una vez activado
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
+
+function solicitarActualizacion(worker) {
+  const usuarioAcepta = confirm("¡Hay una nueva versión disponible de Asist Pro! ¿Deseas actualizar ahora para ver los cambios?");
+  if (usuarioAcepta) {
+    // Envía la orden al SW de saltar la espera
+    worker.postMessage({ action: 'skipWaiting' });
+  }
+}
+
 </script>
 
 </body>
