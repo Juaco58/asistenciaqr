@@ -1,0 +1,32 @@
+{
+  "id": "/asistenciaqr/",
+  "name": "Control de Asistencia QR",
+  "short_name": "Asistencia",
+  "description": "Control de Asistencia a reuniones profesional v2",
+  "start_url": "/asistenciaqr/index.html",
+  "scope": "/asistenciaqr/",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#20558a",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "checkmark_192x192E.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "checkmark_512x512E.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "maskable-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
