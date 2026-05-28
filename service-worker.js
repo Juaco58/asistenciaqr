@@ -3,12 +3,12 @@ const CACHE_NAME = 'asist-pro-root-v0.2';
 
 // Rutas absolutas del repositorio para evitar fallos en GitHub Pages
 const ASSETS = [
-  '/asistenciaqr/',
-  '/asistenciaqr/index.html',
-  '/asistenciaqr/manifest.json',
-  '/asistenciaqr/checkmark_192x192E.png',
-  '/asistenciaqr/checkmark_512x512E.png',
-  '/asistenciaqr/maskable-icon-512x512.png' // Nombre corregido según tu manifest
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/checkmark_192x192E.png',
+  '/checkmark_512x512E.png',
+  '/maskable-icon-512x512.png' // Nombre corregido según tu manifest
 ];
 
 // Instala el Service Worker y guarda los archivos en caché
