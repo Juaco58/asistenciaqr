@@ -12,13 +12,14 @@ const ASSETS = [
   '/maskable-icon-512x512.png?v=1.1' // Nombre corregido según la v= del manifest
 ];
 
-// Instala el Service Worker y guarda los archivos en caché
+// Instala el Service Worker y guarda los archivos en caché (CORREGIDO)
 self.addEventListener('install', event => {
-    self.skipWaiting(); 
+    // Se eliminó self.skipWaiting() de aquí para que espere al cartel del index.html
     event.waitUntil(
         caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
     );
 });
+
 
 // Activa el Service Worker y limpia cachés antiguos
 self.addEventListener('activate', (event) => {
@@ -45,9 +46,10 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
-// Escuchar el mensaje del botón "Aceptar" del cartel de actualización
+// Escuchar el mensaje del botón "Aceptar" del cartel de actualización (CORREGIDO)
 self.addEventListener('message', event => {
-  if (event.data && event.data.type === 'SKIP_WAITING') {
+  if (event.data && event.data.action === 'skipWaiting') {
     self.skipWaiting();
   }
 });
+
