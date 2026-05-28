@@ -27,26 +27,41 @@
     <!-- Registro del Service Worker adaptado a tu script de actualización -->
     <script>
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./service-worker.js')
-            .then(reg => {
-              console.log('Service Worker registrado en:', reg.scope);
-              
-              // Lógica para detectar si subiste cambios a GitHub y forzar la actualización
-              reg.addEventListener('updatefound', () => {
-                const newWorker = reg.installing;
-                newWorker.addEventListener('statechange', () => {
-                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    console.log('Nueva versión detectada. Actualizando aplicación...');
-                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                    window.location.reload();
-                  }
-                });
-              });
-            })
-            .catch(err => console.error('Error al registrar Service Worker:', err));
-        });
+  navigator.serviceWorker.register('/sw.js')
+    .then(reg => {
+      // MEJORA 1: Si ya hay un SW esperando en segundo plano, avisar inmediatamente
+      if (reg.waiting) {
+        solicitarActualizacion(reg.waiting);
       }
+
+      // MEJORA 2: Monitorear si el SW pasa a estado "esperando" en vivo
+      reg.addEventListener('updatefound', () => {
+        const nuevoSW = reg.installing;
+        nuevoSW.addEventListener('statechange', () => {
+          if (nuevoSW.state === 'installed') {
+            if (navigator.serviceWorker.controller) {
+              solicitarActualizacion(nuevoSW);
+            }
+          }
+        });
+      });
+    });
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    window.location.reload();
+  });
+}
+
+function solicitarActualizacion(worker) {
+  // Un retraso mínimo evita que el cartel salte antes de que renderice la pantalla
+  setTimeout(() => {
+    const usuarioAcepta = confirm("¡Hay una nueva versión de Asist Pro! ¿Deseas actualizar ahora para ver los cambios?");
+    if (usuarioAcepta) {
+      worker.postMessage({ action: 'skipWaiting' });
+    }
+  }, 500);
+}
+
     </script>
 </head>
 
