@@ -2,7 +2,7 @@
   "id": "/asistenciaqr/",
   "name": "Control de Asistencia QR",
   "short_name": "Asistencia",
-  "description": "Control de Asistencia a reuniones profesional v2",
+  "description": "Control de Asistencia a reuniones profesional v0.4",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -23,7 +23,7 @@
       "purpose": "any"
     },
     {
-      "src": "/maskable-icon-512x512.png?v=0.3",
+      "src": "/maskable-icon-512x512.png?v=0.4",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
