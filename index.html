@@ -236,7 +236,7 @@
     });
 
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
+  navigator.serviceWorker.register('/service-worker.js')
     .then(reg => {
       // Revisa si ya hay un SW esperando al cargar la página
       if (reg.waiting) {
