@@ -7,7 +7,7 @@
 
     <!-- Enlaces obligatorios para la PWA instalable en GitHub Pages -->
     <!-- Cambiar el ?v= de tu manifiesto obliga al navegador a leer el archivo nuevo -->
-<link rel="manifest" href="/manifest.json?v=1.0">
+<link rel="manifest" href="/manifest.json?v=1.1">
     <meta name="theme-color" content="#20558a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,7 +27,7 @@
     <!-- Registro del Service Worker adaptado a tu script de actualización -->
     <script>
       if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw.js')
+  navigator.serviceWorker.register('/service-worker.js')
     .then(reg => {
       // MEJORA 1: Si ya hay un SW esperando en segundo plano, avisar inmediatamente
       if (reg.waiting) {
