@@ -5,10 +5,10 @@ const CACHE_NAME = 'asist-pro-root-v0.4';
 const ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json',
+  '/manifest.json?v=0.4',
   '/checkmark_192x192E.png',
   '/checkmark_512x512E.png',
-  '/maskable-icon-512x512.png' // Nombre corregido según tu manifest
+  '/maskable-icon-512x512.png?v=0.4' // Nombre corregido según tu manifest
 ];
 
 // Instala el Service Worker y guarda los archivos en caché
