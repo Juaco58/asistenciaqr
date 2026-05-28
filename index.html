@@ -6,12 +6,12 @@
     <title>Asistencia QR Profesional</title>
 
     <!-- Enlaces obligatorios para la PWA instalable en GitHub Pages -->
-    <link rel="manifest" href="/asistenciaqr/manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#20558a">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="/asistenciaqr/checkmark_192x192E.png">
+    <link rel="apple-touch-icon" href="/checkmark_192x192E.png">
 
     <style>
         body { font-family: Arial, sans-serif; text-align: center; background: #f4f4f9; margin: 0; padding: 20px; }
@@ -27,7 +27,7 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/asistenciaqr/service-worker.js')
+          navigator.serviceWorker.register('./service-worker.js')
             .then(reg => {
               console.log('Service Worker registrado en:', reg.scope);
               
