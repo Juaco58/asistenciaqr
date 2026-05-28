@@ -1,5 +1,5 @@
 // 1. Nombre del caché incrementado
-const CACHE_NAME = 'asist-pro-root-v0.2'; 
+const CACHE_NAME = 'asist-pro-root-v0.3'; 
 
 // Rutas absolutas del repositorio para evitar fallos en GitHub Pages
 const ASSETS = [
