@@ -15,6 +15,7 @@ Sólo el Administrador puede cargar la base de Usuarios.
 
 A partir de este momento, cada vez que se haga una mejora en tu aplicación y se decida lanzar una nueva versión (como por ej. la 1.2), el proceso que debe repetirse es sumamente sencillo: En service-worker.js: Cambiá el nombre a const CACHE_NAME = 'asist-pro-root-v1.2'; y poné ?v=1.2 en los archivos de la lista ASSETS. En manifest.json: Cambiá el parámetro del icono enmascarable a ?v=1.2. En index.html: Cambiá la vinculación a <link rel="manifest" href="/manifest.json?v=1.2">. 
 Se cargan los tres nuevos reemplazando los viejos en GIT HUB, y éstos se actualizarán solos en Vercel y la app se encargará del resto, avisando a los usuarios con el cartel de confirmación de actualización.
+
 El maskable icon de 512x512 se hizo con Affinity y se ajustó con Progressier.com
 Ahora hay una bandera de aviso si se valida registro de asistencia de más de un DNI desde el mismo dispositivo.
 De ahora en más, el proceso de administración de asistencias a reuniones se reduce a esto:
