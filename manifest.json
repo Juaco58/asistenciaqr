@@ -3,7 +3,7 @@
   "name": "Control de Asistencia QR",
   "short_name": "Asistencia",
   // La versión debe coincidir en los tres archivos
-  "description": "Control de Asistencia a reuniones profesional v1.4",
+  "description": "Control de Asistencia a reuniones profesional v1.5",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -25,7 +25,7 @@
     },
     {
       //la v= del maskable debe coincidir con la de arriba y los otros archivos 
-      "src": "/maskable-icon-512x512.png?v=1.4",
+      "src": "/maskable-icon-512x512.png?v=1.5",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
