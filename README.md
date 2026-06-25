@@ -22,5 +22,5 @@ De ahora en más, el proceso de administración de asistencias a reuniones se re
 •	Abrís el Excel "Libro de Asistencia CON CONTROL".
 •	Vas a la pestaña Datos y tocás Actualizar todo.
 •	El sistema viaja solo a internet, se trae los datos de Supabase, te acomoda el horario de Argentina y te pinta de rojo las alertas de un dispositivo compartido, si las hubiese.
-
+Cuando Avise Git Hub o supabase hay que entrar al sitio. Para restrablecer automáticamente Git Hub, o despausar Supabase.
 
